@@ -1,0 +1,10 @@
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+cmake_install.cmake
+install_manifest.txt
+CTestTestfile.cmake
+build/
+!build/t/.getkeep
+*.dylib
+*.pyc
