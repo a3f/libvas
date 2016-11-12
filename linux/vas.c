@@ -52,7 +52,7 @@ ssize_t vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
     ssize_t nbytes;
     nbytes = pread(vas->memfd, dst, len, src);
 
-	if (nbytes != -1)
+    if (nbytes != -1)
         return nbytes;
 
     return -1;
@@ -62,7 +62,7 @@ ssize_t vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len) {
     ssize_t nbytes;
     nbytes = pwrite(vas->memfd, src, len, dst);
 
-	if (nbytes != -1)
+    if (nbytes != -1)
         return nbytes;
 
     return -1;
