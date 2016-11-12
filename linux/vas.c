@@ -43,10 +43,9 @@ vas_t *vas_open(pid_t pid, int flags) {
     return vas;
 }
 
-int vas_close(vas_t *vas) {
+void vas_close(vas_t *vas) {
     close(vas->memfd);
     free(vas);
-    return 0;
 }
 
 ssize_t vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {

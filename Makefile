@@ -167,32 +167,32 @@ vas/fast:
 	$(MAKE) -f CMakeFiles/vas.dir/build.make CMakeFiles/vas.dir/build
 .PHONY : vas/fast
 
-vas.o: vas.c.o
+poll.o: poll.c.o
 
-.PHONY : vas.o
+.PHONY : poll.o
 
 # target to build an object file
-vas.c.o:
-	$(MAKE) -f CMakeFiles/vas.dir/build.make CMakeFiles/vas.dir/vas.c.o
-.PHONY : vas.c.o
+poll.c.o:
+	$(MAKE) -f CMakeFiles/vas.dir/build.make CMakeFiles/vas.dir/poll.c.o
+.PHONY : poll.c.o
 
-vas.i: vas.c.i
+poll.i: poll.c.i
 
-.PHONY : vas.i
+.PHONY : poll.i
 
 # target to preprocess a source file
-vas.c.i:
-	$(MAKE) -f CMakeFiles/vas.dir/build.make CMakeFiles/vas.dir/vas.c.i
-.PHONY : vas.c.i
+poll.c.i:
+	$(MAKE) -f CMakeFiles/vas.dir/build.make CMakeFiles/vas.dir/poll.c.i
+.PHONY : poll.c.i
 
-vas.s: vas.c.s
+poll.s: poll.c.s
 
-.PHONY : vas.s
+.PHONY : poll.s
 
 # target to generate assembly for a file
-vas.c.s:
-	$(MAKE) -f CMakeFiles/vas.dir/build.make CMakeFiles/vas.dir/vas.c.s
-.PHONY : vas.c.s
+poll.c.s:
+	$(MAKE) -f CMakeFiles/vas.dir/build.make CMakeFiles/vas.dir/poll.c.s
+.PHONY : poll.c.s
 
 xnu/vas.o: xnu/vas.c.o
 
@@ -234,9 +234,9 @@ help:
 	@echo "... install/strip"
 	@echo "... install/local"
 	@echo "... vas"
-	@echo "... vas.o"
-	@echo "... vas.i"
-	@echo "... vas.s"
+	@echo "... poll.o"
+	@echo "... poll.i"
+	@echo "... poll.s"
 	@echo "... xnu/vas.o"
 	@echo "... xnu/vas.i"
 	@echo "... xnu/vas.s"

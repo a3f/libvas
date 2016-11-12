@@ -6,6 +6,7 @@ import ycm_core
 # compilation database set (by default, one is not set).
 # CHANGE THIS LIST OF FLAGS. YES, THIS IS THE DROID YOU HAVE BEEN LOOKING FOR.
 flags = [
+    '-D_WIN64',
     '-DLINT',
     '-Wall',
     '-Wextra',

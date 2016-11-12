@@ -1,30 +1,43 @@
-#include <vas.h>
-#include <stdlib.h>
+#include "vas.h"
 
-struct vas_poll_t {
-    vas_t *vas;
-    vas_addr_t addr;
-    size_t size;
+#include <stdlib.h>
+#include <string.h>
+#include <pid.h>
+
+struct vas_t {
+    pid_t pid;
 };
 
-vas_poll_t *vas_poll_new(vas_t *vas, vas_addr_t addr, size_t size, int flags) {
+vas_t *vas_open(pid_t pid, int flags) {
+    struct vas_t *vas;
 
-    vas_poll_t *handle;
-    if (flags != 0)
+    if (flags != 0) return NULL;
+
+    if (pid != pid_self())
         return NULL;
 
-    handle = malloc(sizeof *handle);
+    vas = malloc(sizeof *vas);
+    vas->pid = pid;
 
-    handle->vas  = vas;
-    handle->addr = addr;
-    handle->size = size;
+    return vas;
+}
 
-    return handle;
+void vas_close(vas_t *vas) {
+    free(vas);
 }
-int vas_poll(vas_poll_t *p, void* buf) {
-    return vas_read(p->vas, p->addr, buf, p->size);
+
+ssize_t vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
+    (void)vas;
+    memcpy(dst, (const void*)src, len);
+
+    return len;
 }
-void vas_poll_del(vas_poll_t *p) {
-    free(p);
+
+ssize_t vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len) {
+    (void)vas;
+    memcpy((void*)dst, src, len);
+
+    return len;
 }
+
 

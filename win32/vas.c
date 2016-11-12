@@ -35,20 +35,19 @@ vas_t *vas_open(pid_t pid, int flags) {
     return vas;
 }
 
-int vas_close(vas_t *vas) {
+void vas_close(vas_t *vas) {
     CloseHandle(vas->process);
     free(vas);
-    return 0;
 }
 
 ssize_t vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
-    ssize_t nbytes;
+    size_t nbytes;
     BOOL success;
 
     if (len > SSIZE_MAX)
         return -1;
 
-     success = ReadProcessMemory(vas->process, src, dst, len, &nbytes);
+     success = ReadProcessMemory(vas->process, (LPCVOID*)src, dst, len, &nbytes);
 
 	if (success)
         return nbytes;
@@ -57,13 +56,13 @@ ssize_t vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
 }
 
 ssize_t vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len) {
-    ssize_t nbytes;
+    size_t nbytes;
     BOOL success;
 
     if (len > SSIZE_MAX)
         return -1;
 
-     success = WriteProcessMemory(vas->process, dst, src, len, &nbytes);
+     success = WriteProcessMemory(vas->process, (LPCVOID*)dst, src, len, &nbytes);
 
 	if (success)
         return nbytes;
