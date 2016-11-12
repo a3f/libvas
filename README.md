@@ -8,7 +8,8 @@ Multi-platform C lib for peeking/poking~~/searching~~ memory
 
 Works on OS X, Windows and Linux. Requires [libpid]. Install with:
 
-    cmake .
+    cd build
+    cmake ..
     make install
 
 # License
