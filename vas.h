@@ -3,8 +3,32 @@
 
 #include <pid.h>
 #include <stddef.h>
+
+#if __STDC_VERSION__ >= 199901L
+
 #include <stdint.h>
-#include <pthread.h>
+#ifdef UINTPTR_MAX
+ typedef uintptr_t vas_addr_t;
+#else
+ typedef unsigned long long vas_addr_t;
+#endif
+
+#else
+
+#if _WIN32
+
+#if ${CMAKE_SIZEOF_VOID_P} == 8
+ typedef unsigned __int64 vas_addr_t;
+#else
+ typedef unsigned long vas_addr_t;
+#endif
+
+#else
+ typedef unsigned long vas_addr_t;
+#endif
+#endif
+
+
 
 /**
  * References a virtual address space
@@ -14,7 +38,6 @@ typedef struct vas_t vas_t;
  * Unsigned data type.
  * References a _data_ address in a virtual address space
  */
-typedef uintptr_t vas_addr_t;
 
 /**
  * Opens a handle to process id pid's address space

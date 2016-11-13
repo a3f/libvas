@@ -1,3 +1,3 @@
 #!/bin/sh
-make && gcc -Wall -Wextra -std=c89 -pedantic -Werror -g \
-    -obuild/t/$1 ./t/$1.c -L. -lvas -lpid -isystem. && ./build/t/$1 && echo 'All tests passed'
+gcc -Wall -Wextra -std=c89 -pedantic -Werror -g \
+    -o./build/t/$1 ./t/$1.c -Lbuild -lvas $(pkg-config --libs libpid) -isystem. && ./build/t/$1 && echo 'All tests passed'
