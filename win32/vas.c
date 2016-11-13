@@ -44,7 +44,7 @@ void vas_close(vas_t *vas) {
 }
 
 ssize_t vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
-    size_t nbytes;
+    SIZE_T nbytes;
     BOOL success;
 
     if (len > SSIZE_MAX)
@@ -59,7 +59,7 @@ ssize_t vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
 }
 
 ssize_t vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len) {
-    size_t nbytes;
+    SIZE_T nbytes;
     BOOL success;
 
     if (len > SSIZE_MAX)

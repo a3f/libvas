@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 2.6)
 project(vas)
 set(CMAKE_BUILD_TYPE Debug)
 
-#configure_file(vas.h.in vas.h)
+configure_file(vas.h.in vas.h)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 if(MSVC)
   # Force to always compile with W4
