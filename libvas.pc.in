@@ -1,0 +1,13 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libvas
+Description: Peek/Poke into other address spaces
+URL: http://github.com/a3f/libvas
+Version: @PROJECT_VERSION@
+Requires: libpid >= 0.1
+Libs: -L${libdir} -lvas
+Cflags: -I${includedir}
+ 

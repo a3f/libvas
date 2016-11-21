@@ -7,3 +7,4 @@ CTestTestfile.cmake
 build/
 *.dylib
 *.pyc
+*.sw*

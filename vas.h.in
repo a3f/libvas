@@ -19,8 +19,10 @@
 
 #if ${CMAKE_SIZEOF_VOID_P} == 8
  typedef unsigned __int64 vas_addr_t;
-#else
+#elif ${CMAKE_SIZEOF_VOID_P} == 4
  typedef unsigned long vas_addr_t;
+#else
+#error "CMake misconfiguration or very peculiar Windows detected"
 #endif
 
 #else
@@ -103,4 +105,3 @@ void *vas_cow(vas_t*, vas_addr_t, const vas_addr_t, size_t);
 
 
 #endif
-

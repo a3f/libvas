@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 2.6)
 project(vas)
+set(PROJECT_VERSION 0.1)
 set(CMAKE_BUILD_TYPE Debug)
 
 configure_file(vas.h.in vas.h)
+configure_file(libvas.pc.in libvas.pc @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 if(MSVC)
@@ -34,11 +36,13 @@ ENDIF(WIN32)
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
 # Install pkg-config pc
-install(FILES lib${PROJECT_NAME}.pc DESTINATION share/pkgconfig)
+install(FILES ${CMAKE_BINARY_DIR}/lib${PROJECT_NAME}.pc DESTINATION share/pkgconfig)
 
 # Install library
-install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+install (TARGETS ${PROJECT_NAME}
+         ARCHIVE DESTINATION lib
+         LIBRARY DESTINATION lib)
 
 # Install library headers
-file(GLOB HEADERS vas.h)
-install(FILES ${HEADERS} DESTINATION include)
+install(FILES ${CMAKE_BINARY_DIR}/vas.h DESTINATION include)
+
