@@ -10,7 +10,7 @@ Multi-platform C lib for peeking/poking~~/searching~~ memory
 
 If Perl is available, you can install library, Perl wrapper and their dependencies by running
 
-    cpan Proc::Memory
+    cpan Alien::libvas
     cp -R $(perl -MAlien::libvas -e 'print Alien::libvas->dist_dir,"/share"') /usr/local/
 
 Afterwards you can use `pkg-config --libs libvas` and `pkg-config --cflags libvas` in your build script.
