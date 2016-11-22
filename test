@@ -2,5 +2,5 @@
 #set -x
 gcc -Wall -Wextra -std=c89 -pedantic -Werror -g \
     -o./build/$1.out ./$1 -Lbuild -lvas $(pkg-config --libs --cflags libpid) -isystem build \
-    && LD_LIBRARY_PATH=build ./build/$1.out \
+    && ./build/$1.out \
     && echo 'All tests passed'

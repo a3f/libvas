@@ -42,9 +42,7 @@ add_library(${PROJECT_NAME} SHARED ${SOURCES})
 install(FILES ${CMAKE_BINARY_DIR}/lib${PROJECT_NAME}.pc DESTINATION share/pkgconfig)
 
 # Install library
-install (TARGETS ${PROJECT_NAME}
-         ARCHIVE DESTINATION lib
-         LIBRARY DESTINATION lib)
+install (TARGETS ${PROJECT_NAME} DESTINATION lib)
 
 # Install library headers
 install(FILES ${CMAKE_BINARY_DIR}/vas.h DESTINATION include)
