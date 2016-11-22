@@ -1,0 +1,4 @@
+#!/bin/sh
+set -o verbose
+gcc -Wall -Wextra -std=c89 -pedantic -Werror -g \
+    -o./build/$1.out ./$1 $(pkg-config --libs --cflags libvas) $(pkg-config --libs libpid) && ./build/$1.out && echo 'All tests passed'

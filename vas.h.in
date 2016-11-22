@@ -1,10 +1,15 @@
 #ifndef LIBVAS_VAS_H_
 #define LIBVAS_VAS_H_
 
-#include <pid.h>
 #include <stddef.h>
 
-#if __STDC_VERSION__ >= 199901L
+#cmakedefine VAS_HAVE_PID_H 1
+#define VAS_IS_WIN32 (${WIN32}+0)
+#define VAS_IS_POSIX (${UNIX}+0)
+#define VAS_PTR_64BIT (${CMAKE_SIZEOF_VOID_P} == 8)
+#define VAS_PTR_32BIT (${CMAKE_SIZEOF_VOID_P} == 4)
+
+#if __STDC_VERSION__ >= 199901L /* C99 */
 
 #include <stdint.h>
 #ifdef UINTPTR_MAX
@@ -15,20 +20,33 @@
 
 #else
 
-#if _WIN32
+#if !VAS_IS_WIN32
+typedef unsigned long vas_addr_t;
 
-#if ${CMAKE_SIZEOF_VOID_P} == 8
+#else
+
+#if VAS_PTR_64BIT
  typedef unsigned __int64 vas_addr_t;
-#elif ${CMAKE_SIZEOF_VOID_P} == 4
+#elif VAS_PTR_32BIT
  typedef unsigned long vas_addr_t;
 #else
 #error "CMake misconfiguration or very peculiar Windows detected"
 #endif
 
+#endif
+#endif
+
+#if VAS_HAVE_PID_H
+#include <pid.h>
+#elif VAS_IS_POSIX
+#include <sys/types.h>
+#elif VAS_IS_WIN32
+typedef unsigned long pid_t;
 #else
- typedef unsigned long vas_addr_t;
+#error "pid_t undefined (Maybe install libpid?)"
 #endif
-#endif
+
+
 
 
 

@@ -1,3 +1,6 @@
 #!/bin/sh
+#set -x
 gcc -Wall -Wextra -std=c89 -pedantic -Werror -g \
-    -o./build/$1.out ./$1 -Lbuild -lvas $(pkg-config --libs libpid) -isystem. && ./build/$1.out && echo 'All tests passed'
+    -o./build/$1.out ./$1 -Lbuild -lvas $(pkg-config --libs libpid) -isystem build \
+    && LD_LIBRARY_PATH=build ./build/$1.out \
+    && echo 'All tests passed'

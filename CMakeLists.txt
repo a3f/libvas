@@ -3,6 +3,9 @@ project(vas)
 set(PROJECT_VERSION 0.1)
 set(CMAKE_BUILD_TYPE Debug)
 
+INCLUDE (CheckIncludeFiles)
+CHECK_INCLUDE_FILES(pid.h VAS_HAVE_PID_H)
+
 configure_file(vas.h.in vas.h)
 configure_file(libvas.pc.in libvas.pc @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

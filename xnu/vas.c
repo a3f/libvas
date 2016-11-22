@@ -10,8 +10,6 @@
 
 #include <stdlib.h>
 
-#include <pid.h>
-
 struct vas_t {
     pid_t pid;
     mach_port_t port;

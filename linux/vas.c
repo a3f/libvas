@@ -9,8 +9,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <pid.h>
-
 struct vas_t {
     pid_t pid;
     int memfd;
