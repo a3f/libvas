@@ -7,7 +7,7 @@ Name: libvas
 Description: Peek/Poke into other address spaces
 URL: http://github.com/a3f/libvas
 Version: @PROJECT_VERSION@
-Requires: libpid >= 0.1
+Requires:
 Libs: -L${libdir} -lvas
 Cflags: -I${includedir}
  
