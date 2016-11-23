@@ -1,4 +1,7 @@
+#define _XOPEN_SOURCE 500 /* for pwrite/pread(2) */
 #include "vas.h"
+
+#include "config.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -14,17 +17,30 @@ struct vas_t {
     int memfd;
 };
 
+/* (racy) alternatives for when pread/pwrite aren't available */
+#if !HAVE_PREAD
+ssize_t pread(int fd, void *buf, size_t count, off_t offset) {
+    if (lseek(fd, offset, SEEK_SET) == -1) return -1;
+    return read(fd, buf, count);
+}
+#endif
+#if !HAVE_PWRITE
+ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset) {
+    if (lseek(fd, offset, SEEK_SET) == -1) return -1;
+    return write(fd, buf, count);
+}
+#endif
+
 vas_t *vas_open(pid_t pid, int flags) {
     struct vas_t *vas;
-    char filename[64];
+    /* snprintf is C99 */
+    char filename[sizeof "/proc//mem" + 3*sizeof (pid_t)];
     int fd;
     int ret;
 
     if (flags != 0) return NULL;
 
-    ret = snprintf(filename, sizeof filename,
-            "/proc/%d/mem", pid
-    );
+    ret = sprintf(filename, "/proc/%d/mem", pid);
     if (ret < 0) {
         return NULL;
     }

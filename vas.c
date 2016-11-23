@@ -2,7 +2,14 @@
 
 #include <stdlib.h>
 #include <string.h>
+
+#if VAS_HAVE_PID_H
 #include <pid.h>
+#else
+#include <sys/types.h>
+#include <unistd.h>
+pid_t pid_self(void) { return getpid(); }
+#endif
 
 struct vas_t {
     pid_t pid;
