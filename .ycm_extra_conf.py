@@ -30,6 +30,7 @@ flags = [
     '-isystem', '../libpid',
     '-I', 'include',
     '-I', '../include',
+    '-I', 'build',
     '-I.',
     '-I..'
 ]

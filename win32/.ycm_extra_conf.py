@@ -32,6 +32,7 @@ flags = [
     '-I', 'include',
     '-I', '../include',
     '-I.',
+    '-I', 'build',
     '-I..'
 ]
 
