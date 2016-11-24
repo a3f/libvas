@@ -12,24 +12,34 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-struct vas_t {
-    pid_t pid;
-    int memfd;
-};
-
 /* (racy) alternatives for when pread/pwrite aren't available */
 #if !HAVE_PREAD
-ssize_t pread(int fd, void *buf, size_t count, off_t offset) {
+static ssize_t pread(int fd, void *buf, size_t count, off_t offset) {
     if (lseek(fd, offset, SEEK_SET) == -1) return -1;
     return read(fd, buf, count);
 }
 #endif
 #if !HAVE_PWRITE
-ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset) {
+static ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset) {
     if (lseek(fd, offset, SEEK_SET) == -1) return -1;
     return write(fd, buf, count);
 }
 #endif
+
+#if !(HAVE_PREAD && HAVE_PWRITE) && _REENTRANT
+#define IF_NON_REENTRANT(expr) (expr)
+#include <pthread.h>
+#else
+#define IF_NON_REENTRANT(expr) 
+#endif
+
+
+struct vas_t {
+    pid_t pid;
+    int memfd;
+    IF_NON_REENTRANT( pthread_mutex_t lock; )
+};
+
 
 vas_t *vas_open(pid_t pid, int flags) {
     struct vas_t *vas;
@@ -53,18 +63,22 @@ vas_t *vas_open(pid_t pid, int flags) {
     vas = malloc(sizeof *vas);
     vas->pid = pid;
     vas->memfd = fd;
+    IF_NON_REENTRANT( vas->lock = PTHREAD_MUTEX_INITIALIZER; )
 
     return vas;
 }
 
 void vas_close(vas_t *vas) {
     close(vas->memfd);
+    IF_NON_REENTRANT( pthread_mutex_destroy(vas->lock); )
     free(vas);
 }
 
 ssize_t vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
     ssize_t nbytes;
-    nbytes = pread(vas->memfd, dst, len, src);
+    IF_NON_REENTRANT( pthread_mutex_lock(vas->lock); )
+        nbytes = pread(vas->memfd, dst, len, src);
+    IF_NON_REENTRANT( pthread_mutex_unlock(vas->lock); )
 
     if (nbytes != -1)
         return nbytes;
@@ -74,7 +88,9 @@ ssize_t vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
 
 ssize_t vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len) {
     ssize_t nbytes;
-    nbytes = pwrite(vas->memfd, src, len, dst);
+    IF_NON_REENTRANT( pthread_mutex_lock(vas->lock); )
+        nbytes = pwrite(vas->memfd, src, len, dst);
+    IF_NON_REENTRANT( pthread_mutex_unlock(vas->lock); )
 
     if (nbytes != -1)
         return nbytes;
