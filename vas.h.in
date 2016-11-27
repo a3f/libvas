@@ -3,13 +3,25 @@
 
 #include <stddef.h>
 
-#cmakedefine VAS_HAVE_PID_H 1
+#define VAS_VERSION "${PROJECT_VERSION}"
+#cmakedefine VAS_HAVE_PID_H  1
+#cmakedefine VAS_USES_MEMCPY 1
+#cmakedefine VAS_USES_WINAPI 2
+#cmakedefine VAS_USES_MACH   4
+#cmakedefine VAS_USES_PROCFS 8
+
 #define VAS_IS_WIN32 (${WIN32}+0)
 #define VAS_IS_POSIX (${UNIX}+0)
 #define VAS_PTR_64BIT (${CMAKE_SIZEOF_VOID_P} == 8)
 #define VAS_PTR_32BIT (${CMAKE_SIZEOF_VOID_P} == 4)
 
+
 #if __STDC_VERSION__ >= 199901L /* C99 */
+
+/**
+ * Unsigned data type.
+ * References a _data_ address in a virtual address space
+ */
 
 #include <stdint.h>
 #ifdef UINTPTR_MAX
@@ -46,18 +58,16 @@ typedef unsigned long pid_t;
 #error "pid_t undefined (Maybe install libpid?)"
 #endif
 
-
-
+/**
+ * Get version from the library
+ */
+const char *vas_get_version(void);
 
 
 /**
  * References a virtual address space
  */
 typedef struct vas_t vas_t;
-/**
- * Unsigned data type.
- * References a _data_ address in a virtual address space
- */
 
 /**
  * Opens a handle to process id pid's address space
@@ -72,12 +82,13 @@ void vas_close(vas_t *);
 /**
  * Reads size_t bytes from vas_t at vas_addr_t and
  * saves them to void*
+ * The local and remote region may not overlap
  */
 ssize_t vas_read(vas_t*, const vas_addr_t, void*, size_t);
 
 /**
- * Write size_t to from vas_t at vas_addr_t from
- * void*
+ * Write size_t to from vas_t at vas_addr_t from void*
+ * The local and remote region may not overlap
  */
 ssize_t vas_write(vas_t*, vas_addr_t, const void*, size_t);
 

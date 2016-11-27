@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
 project(vas C)
-set(PROJECT_VERSION 0.3)
+set(PROJECT_VERSION 0.4)
 set(CMAKE_BUILD_TYPE Debug)
 
 INCLUDE (CheckIncludeFiles)
@@ -20,42 +20,49 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/CFLAGS.cmake)
 include_directories(include)
 include_directories(.)
 
+file(GLOB SOURCES info.c)
+
 STRING(REGEX MATCH "Linux" LINUX ${CMAKE_SYSTEM_NAME})
 STRING(REGEX MATCH "BSD" BSD ${CMAKE_SYSTEM_NAME})
 
 IF(WIN32)
-    MESSAGE(STATUS "${PROJECT_NAME} will use WinAPI")
-    file(GLOB SOURCES win32/*.c poll.c)
+    MESSAGE(STATUS "lib${PROJECT_NAME} will use WinAPI")
+    SET(VAS_USES_WINAPI 1)
+    file(GLOB SOURCES ${SOURCES} win32/*.c poll.c)
 
 ELSEIF(HAVE_MACH_H) # macOS and GNU Hurd
-    MESSAGE(STATUS "${PROJECT_NAME} will use Mach VM API")
+    MESSAGE(STATUS "lib${PROJECT_NAME} will use Mach VM API")
+    SET(VAS_USES_MACH 1)
     set(CMAKE_MACOSX_RPATH 1) 
-    file(GLOB SOURCES mach/*.c)
+    file(GLOB SOURCES ${SOURCES} mach/*.c)
 
 ELSEIF(EXISTS "/proc/self/mem") # Linux and more
-    MESSAGE(STATUS "${PROJECT_NAME} will use procfs")
+    MESSAGE(STATUS "lib${PROJECT_NAME} will use procfs")
+    SET(VAS_USES_PROCFS 1)
     # Are there procfs' which have no /proc/self symlink?
     INCLUDE (CheckFunctionExists)
         CHECK_FUNCTION_EXISTS(pwrite HAVE_PWRITE )
         CHECK_FUNCTION_EXISTS(pread HAVE_PREAD)
         IF (NOT HAVE_PWRITE OR NOT HAVE_PREAD)
-            MESSAGE(WARNING "using racy substitute for pread/pwrite(2)")
+            MESSAGE(WARNING "using own implementation for pread/pwrite(2)")
         ENDIF()
     configure_file(config.h.in config.h)
-    file(GLOB SOURCES procfs/*.c poll.c)
+    file(GLOB SOURCES ${SOURCES} procfs/*.c poll.c)
     #add_definitions(-DHAS_WEAK_ALIAS)
 
 ELSEIF(BSD)
-    MESSAGE(STATUS "${PROJECT_NAME} will use memcpy")
+    MESSAGE(STATUS "lib${PROJECT_NAME} will use memcpy")
+    SET(VAS_USES_MEMCPY 1)
     MESSAGE(WARNING "Please mount procfs and try again")
     MESSAGE(WARNING "Falling back to trivial (own address space only) implementation.")
-    file(GLOB SOURCES *.c)
+    file(GLOB SOURCES ${SOURCES} *.c)
 
 ELSE()
-    MESSAGE(STATUS "${PROJECT_NAME} will use memcpy")
+    MESSAGE(STATUS "lib${PROJECT_NAME} will use memcpy")
+    SET(VAS_USES_MEMCPY 1)
     MESSAGE(WARNING "It looks like we don't support this system yet,")
     MESSAGE(WARNING "Falling back to trivial (own address space only) implementation.")
-    file(GLOB SOURCES *.c)
+    file(GLOB SOURCES ${SOURCES} *.c)
 
 ENDIF(WIN32)
 
