@@ -8,10 +8,13 @@ Multi-platform C lib for peeking/poking~~/searching~~ memory
 
 ## Install
 
-If Perl is available, you can install library, Perl wrapper and their dependencies by running
+If Perl is available, you can run:
 
     cpan Alien::libvas
+# TODO: change to hardlink
     cp -R $(perl -MAlien::libvas -e 'print Alien::libvas->dist_dir,"/share"') /usr/local/
+
+If not consider installing it, as it not only fetches CMake if unavailable and uses it to build the library but also runs the much more extensive perl-based test suite. See [Alien::libvas] for details.
 
 Afterwards you can use `pkg-config --libs libvas` and `pkg-config --cflags libvas` in your build script.
 
@@ -32,4 +35,5 @@ libvas is released under the LGPL. It contains code from [Stijus' MemoryScanner]
 
 [Proc::Memory]: https://metacpan.org/pod/Proc::Memory
 [libpid]: https://github.com/a3f/libpid
+[Alien::libvas]: https://github.com/athreef/Alien::libvas
 [Stijus' MemoryScanner]: https://github.com/Stiju/MemoryScanner

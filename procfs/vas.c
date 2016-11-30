@@ -26,12 +26,13 @@ static ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset) {
 }
 #endif
 
-#if !(HAVE_PREAD && HAVE_PWRITE) && _REENTRANT
+#if !(defined(HAVE_PREAD) && defined(HAVE_PWRITE)) && defined(_REENTRANT)
 #define IF_NON_REENTRANT(expr) (expr)
 #include <pthread.h>
 #else
 #define IF_NON_REENTRANT(expr) 
 #endif
+#undef SET
 
 
 struct vas_t {

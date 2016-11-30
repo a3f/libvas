@@ -1,5 +1,5 @@
+#include <unistd.h>
 #include <assert.h>
-#include <pid.h>
 #include <vas.h>
 #include <stdint.h>
 
@@ -8,7 +8,7 @@ volatile uint32_t *val = &arr[42];
 
 int main(void) {
     uint32_t copy;
-    vas_t *proc = vas_open(pid_self(), 0);
+    vas_t *proc = vas_open(getpid(), 0);
     vas_addr_t addr = (vas_addr_t)val;
     vas_poll_t *poller;
 

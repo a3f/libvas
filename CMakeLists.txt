@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
 project(vas C)
-set(PROJECT_VERSION 0.4)
+set(PROJECT_VERSION 0.41)
 set(CMAKE_BUILD_TYPE Debug)
 
 INCLUDE (CheckIncludeFiles)
