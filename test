@@ -1,5 +1,7 @@
 #!/bin/sh
 #set -x
+mkdir -p build/t
+echo lldb ./build/$1.out
 gcc -Wall -Wextra -std=c89 -pedantic -Werror -g \
     -o./build/$1.out ./$1 -Lbuild -lvas $(pkg-config --libs --cflags libpid) -isystem build \
     && ./build/$1.out \

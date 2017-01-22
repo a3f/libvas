@@ -1,4 +1,5 @@
 #!/bin/sh
+mkdir -p build/t
 set -x
 gcc -Wall -Wextra -std=c89 -pedantic -Werror -g \
     -o./build/$1.out ./$1 $(pkg-config --libs --cflags libvas) $(pkg-config --libs --cflags libpid) \
