@@ -1,8 +1,6 @@
 #ifndef LIBVAS_VAS_H_
 #define LIBVAS_VAS_H_
 
-#include <stddef.h>
-
 #define VAS_VERSION "${PROJECT_VERSION}"
 #cmakedefine VAS_HAVE_PID_H  1
 #cmakedefine VAS_USES_MEMCPY 1
@@ -10,53 +8,10 @@
 #cmakedefine VAS_USES_MACH   4
 #cmakedefine VAS_USES_PROCFS 8
 
-#define VAS_IS_WIN32 (${WIN32}+0)
-#define VAS_IS_POSIX (${UNIX}+0)
-#define VAS_PTR_64BIT (${CMAKE_SIZEOF_VOID_P} == 8)
-#define VAS_PTR_32BIT (${CMAKE_SIZEOF_VOID_P} == 4)
+#include "vas-types.h"
 
 
-#if __STDC_VERSION__ >= 199901L /* C99 */
 
-/**
- * Unsigned data type.
- * References a _data_ address in a virtual address space
- */
-
-#include <stdint.h>
-#ifdef UINTPTR_MAX
- typedef uintptr_t vas_addr_t;
-#else
- typedef unsigned long long vas_addr_t;
-#endif
-
-#else
-
-#if !VAS_IS_WIN32
-typedef unsigned long vas_addr_t;
-
-#else
-
-#if VAS_PTR_64BIT
- typedef unsigned __int64 vas_addr_t;
-#elif VAS_PTR_32BIT
- typedef unsigned long vas_addr_t;
-#else
-#error "CMake misconfiguration or very peculiar Windows detected"
-#endif
-
-#endif
-#endif
-
-#if VAS_HAVE_PID_H
-#include <pid.h>
-#elif VAS_IS_POSIX
-#include <sys/types.h>
-#elif VAS_IS_WIN32
-typedef unsigned long pid_t;
-#else
-#error "pid_t undefined (Maybe install libpid?)"
-#endif
 
 /**
  * @returns version string
@@ -65,11 +20,6 @@ typedef unsigned long pid_t;
  */
 const char *vas_get_version(void);
 
-
-/**
- * References a virtual address space
- */
-typedef struct vas_t vas_t;
 
 /**
  * @returns pointer to static handle
@@ -114,10 +64,6 @@ int vas_search(vas_t*, const vas_addr_t, const void*, size_t);
 
 int vas_pagesize(void);
 
-/**
- * ringbuf
- */
-typedef struct vas_ringbuf_t vas_ringbuf_t;
 vas_ringbuf_t *vas_ringbuf_alloc(vas_t*, size_t pagecount, int flags);
 void vas_ringbuf_free(vas_ringbuf_t *base);
 
@@ -143,9 +89,6 @@ ssize_t vas_readv(vas_t*, const struct vas_addrvec[], int vec_len);
 
 ssize_t vas_writev(vas_t*, const struct vas_addrvec[], int vec_len);
 
-/**
- */
-typedef struct vas_poll_t vas_poll_t;
 
 vas_poll_t *vas_poll_new(vas_t*, vas_addr_t, size_t, int);
 int vas_poll(vas_poll_t*, void*);

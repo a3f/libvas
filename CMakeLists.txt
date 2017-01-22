@@ -1,16 +1,29 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.0.2)
 project(vas C)
 set(PROJECT_VERSION 0.41)
 set(CMAKE_BUILD_TYPE Debug)
 
 INCLUDE (CheckIncludeFiles)
+INCLUDE (CheckTypeSize)
+INCLUDE (CheckSymbolExists)
+CHECK_SYMBOL_EXISTS(MAP_ANONYMOUS sys/mman.h HAVE_MAP_ANONYMOUS)
+CHECK_SYMBOL_EXISTS(MAP_ANON sys/mman.h HAVE_MAP_ANON)
 CHECK_INCLUDE_FILES(pid.h VAS_HAVE_PID_H)
 CHECK_INCLUDE_FILES(mach/mach.h HAVE_MACH_H)
+CHECK_TYPE_SIZE(off_t OFF_T)
+CHECK_TYPE_SIZE(pid_t PID_T)
+IF (HAVE_OFF_T)
+SET(VAS_HAVE_OFF_T 1)
+ENDIF()
+IF (HAVE_PID_T)
+SET(VAS_HAVE_PID_T 1)
+ENDIF()
 
 
 
 
 configure_file(vas.h.in vas.h)
+configure_file(vas-types.h.in vas-types.h)
 configure_file(config.h.in config.h)
 configure_file(libvas.pc.in libvas.pc @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -75,5 +88,5 @@ install(FILES ${CMAKE_BINARY_DIR}/lib${PROJECT_NAME}.pc DESTINATION share/pkgcon
 install (TARGETS ${PROJECT_NAME} DESTINATION lib)
 
 # Install library headers
-install(FILES ${CMAKE_BINARY_DIR}/vas.h DESTINATION include)
+install(FILES ${CMAKE_BINARY_DIR}/vas.h ${CMAKE_BINARY_DIR}/vas-types.h DESTINATION include)
 

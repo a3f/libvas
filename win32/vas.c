@@ -16,16 +16,26 @@ struct vas_t {
     HANDLE process;
 };
 
+vas_t *vas_self(void) {
+    static vas_t self = {0, 0};
+    if (self.pid == 0) {
+        self.pid  = GetCurrentProcessId();
+        self.process = GetCurrentProcess();
+    }
+
+    return &self;
+}
+
 vas_t *vas_open(pid_t pid, int flags) {
     struct vas_t *vas;
     HANDLE process;
 
     if (flags != 0) return NULL;
 
-       process = OpenProcess(
+    process = OpenProcess(
             PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE |
             PROCESS_QUERY_INFORMATION, FALSE, pid
-    );
+            );
 
     if (process == 0) {
         return NULL;
@@ -50,7 +60,7 @@ ssize_t vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
     if (len > SSIZE_MAX)
         return -1;
 
-     success = ReadProcessMemory(vas->process, (LPCVOID*)src, dst, len, &nbytes);
+    success = ReadProcessMemory(vas->process, (LPCVOID*)src, dst, len, &nbytes);
 
     if (success)
         return nbytes;
@@ -65,12 +75,18 @@ ssize_t vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len) {
     if (len > SSIZE_MAX)
         return -1;
 
-     success = WriteProcessMemory(vas->process, (LPCVOID*)dst, src, len, &nbytes);
+    success = WriteProcessMemory(vas->process, (LPCVOID*)dst, src, len, &nbytes);
 
     if (success)
         return nbytes;
 
     return -1;
+}
+
+int vas_pagesize(void) {
+    SYSTEM_INFO system_info;
+    GetSystemInfo(&system_info);
+    return system_info.dwPageSize;
 }
 
 
