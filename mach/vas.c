@@ -1,4 +1,5 @@
 #include "vas.h"
+#include "vas-mach.h"
 
 #include <mach/mach.h>
 #include <mach/mach_vm.h>
@@ -10,10 +11,15 @@
 
 #include <stdlib.h>
 
-struct vas_t {
-    pid_t pid;
-    mach_port_t port;
-};
+vas_t *vas_self(void) {
+    static vas_t self;
+    if (self.pid == 0) {
+        self.pid  = -1;
+        self.port = mach_task_self();
+    }
+
+    return &self;
+}
 
 vas_t *vas_open(pid_t pid, int flags) {
     struct vas_t *vas;
@@ -21,7 +27,7 @@ vas_t *vas_open(pid_t pid, int flags) {
     kern_return_t kret;
     if (flags != 0) return NULL;
 
-     kret = task_for_pid(mach_task_self(), pid, &port);
+    kret = task_for_pid(mach_task_self(), pid, &port);
     if (kret != KERN_SUCCESS) {
         return NULL;
     }
@@ -32,6 +38,8 @@ vas_t *vas_open(pid_t pid, int flags) {
     return vas;
 }
 void vas_close(vas_t *vas) {
+    if (vas == vas_self())
+        return;
     free(vas);
 }
 
@@ -101,7 +109,7 @@ vas_poll_t *vas_poll_new(vas_t *vas, vas_addr_t addr, size_t size, int flags) {
              1,
              vas->port,
              addr,
-             0, /* copy */
+             FALSE, /* copy */
              &curProtection,
              &maxProtection,
              VM_INHERIT_SHARE
@@ -118,7 +126,7 @@ vas_poll_t *vas_poll_new(vas_t *vas, vas_addr_t addr, size_t size, int flags) {
     handle->size = size;
 
     handle->page = page;
-    handle->map = (void*)(page + (addr & (getpagesize()-1)));
+    handle->map = (void*)(page + (addr & (vas_pagesize()-1)));
 
     return handle;
 }
@@ -137,12 +145,10 @@ void vas_poll_del(vas_poll_t *p) {
     free(p);
 }
 
-void *vas_cow(vas_t *vas, vas_addr_t dst, const vas_addr_t src, size_t size) {
-    (void)vas;
-    (void)dst;
-    (void)src;
-    (void)size;
-    return NULL;
+int vas_pagesize(void) {
+    vm_size_t size;
+    kern_return_t ret = host_page_size(mach_host_self(), &size);
+    return ret == KERN_SUCCESS ? size : -1;
 }
 
 

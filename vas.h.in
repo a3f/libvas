@@ -59,7 +59,9 @@ typedef unsigned long pid_t;
 #endif
 
 /**
- * Get version from the library
+ * @returns version string
+ *
+ * Get library version
  */
 const char *vas_get_version(void);
 
@@ -70,21 +72,34 @@ const char *vas_get_version(void);
 typedef struct vas_t vas_t;
 
 /**
- * Opens a handle to process id pid's address space
+ * @returns pointer to static handle
+ *
+ * Retrieves the handle of the current VAS
  */
-vas_t *vas_open(pid_t, int flags);
+vas_t *vas_self(void);
 
 /**
- * Closes a handle opened by vas_open and frees resources
+ * @param pid   process id
+ * @param flags has to be zero
+ * @returns handle
+ *
+ * Opens a handle to a process' address space
  */
-void vas_close(vas_t *);
+vas_t *vas_open(pid_t pid, int flags);
+
+/**
+ * @param vas handle
+ *
+ * Closes handle opened by vas_open and frees resources
+ */
+void vas_close(vas_t *vas);
 
 /**
  * Reads size_t bytes from vas_t at vas_addr_t and
  * saves them to void*
  * The local and remote region may not overlap
  */
-ssize_t vas_read(vas_t*, const vas_addr_t, void*, size_t);
+ssize_t vas_read(vas_t *vas, const vas_addr_t, void*, size_t);
 
 /**
  * Write size_t to from vas_t at vas_addr_t from void*
@@ -96,6 +111,23 @@ ssize_t vas_write(vas_t*, vas_addr_t, const void*, size_t);
  * Effecient memory searching
  */
 int vas_search(vas_t*, const vas_addr_t, const void*, size_t);
+
+int vas_pagesize(void);
+
+/**
+ * ringbuf
+ */
+typedef struct vas_ringbuf_t vas_ringbuf_t;
+vas_ringbuf_t *vas_ringbuf_alloc(vas_t*, size_t pagecount, int flags);
+void vas_ringbuf_free(vas_ringbuf_t *base);
+
+/**
+ * File mapping
+ */
+
+void *vas_fmap(vas_t*, vas_addr_t, const char*, size_t, off_t, int flags);
+
+
 
 /**
  * atomically reading multiple values
@@ -120,17 +152,17 @@ int vas_poll(vas_poll_t*, void*);
 void vas_poll_del(vas_poll_t*);
 
 
-void *vas_fmap(const char *);
-
 /**
  * Duplicate
  */
-vas_addr_t vas_dup(vas_t*, const vas_addr_t, size_t);
+void *vas_dup(vas_t*, const vas_addr_t, size_t);
 
 /**
- * Copy on write specified memory block(s)
+ * Duplicate with CoW-Semantics if possible
+ * NOTE: This will most likely involve a TLB flush on your system,
+ *       So, it's not a silver bullet.
  */
-void *vas_cow(vas_t*, vas_addr_t, const vas_addr_t, size_t);
+void *vas_dup_cow(vas_t*, const vas_addr_t, size_t);
 
 
 #endif
