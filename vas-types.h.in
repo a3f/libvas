@@ -68,4 +68,12 @@ typedef signed long off_t;
 #endif /* VAS_HAVE_OFF_T */
 
 
+#ifdef VAS_HAVE_MMAN_H
+#include <sys/mman.h>
+enum {
+    VAS_MAP_SHARED = MAP_SHARED, VAS_MAP_PRIVATE = MAP_PRIVATE
+};
+#endif
+
+
 #endif /* VAS_TYPES_H_ */

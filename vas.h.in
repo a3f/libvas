@@ -3,6 +3,7 @@
 
 #define VAS_VERSION "${PROJECT_VERSION}"
 #cmakedefine VAS_HAVE_PID_H  1
+#cmakedefine VAS_HAVE_MMAN_H 1
 #cmakedefine VAS_USES_MEMCPY 1
 #cmakedefine VAS_USES_WINAPI 2
 #cmakedefine VAS_USES_MACH   4
@@ -70,8 +71,7 @@ void vas_ringbuf_free(vas_ringbuf_t *base);
 /**
  * File mapping
  */
-
-void *vas_fmap(vas_t*, vas_addr_t, const char*, size_t, off_t, int flags);
+vas_addr_t vas_fmap(vas_t *vas, const char*, off_t, size_t, int flags);
 
 
 

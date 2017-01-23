@@ -1,4 +1,4 @@
-Multi-platform C lib for peeking/poking~~/searching~~ memory
+Multi-platform C lib for peeking/poking/handling virtual memory
 
     #define CHARACTER_HEALTH 0xDEADBEEF
     vas_t *proc = vas_open(pid, 0);
@@ -6,12 +6,20 @@ Multi-platform C lib for peeking/poking~~/searching~~ memory
     vas_read(proc, CHARACTER_HEALTH, &health sizeof(uint32_t));
     printf("Character health is %" PRIu32 "\n", health);
 
+## Features
+
+- Multi-Platform: Runs on Windows, Linux, BSD, MacOS, GNU Hurd and a couple other systems
+- Read/Write/Remap other processes' memory
+- Allocate those nifty virtual-memory-mirrored ring buffers
+- Duplicate memory with Copy-on-Write semantics
+- Portably map files
+
 ## Install
 
 If Perl is available, you can run:
 
     cpan Alien::libvas
-# TODO: change to hardlink
+    # TODO: change to hardlink
     cp -R $(perl -MAlien::libvas -e 'print Alien::libvas->dist_dir,"/share"') /usr/local/
 
 If not consider installing it, as it not only fetches CMake if unavailable and uses it to build the library but also runs the much more extensive perl-based test suite. See [Alien::libvas] for details.
