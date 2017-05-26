@@ -3,7 +3,7 @@ Multi-platform C lib for peeking/poking/handling virtual memory
     #define CHARACTER_HEALTH 0xDEADBEEF
     vas_t *proc = vas_open(pid, 0);
     uint32_t health;
-    vas_read(proc, CHARACTER_HEALTH, &health sizeof(uint32_t));
+    vas_read(proc, CHARACTER_HEALTH, &health, sizeof(uint32_t));
     printf("Character health is %" PRIu32 "\n", health);
 
 ## Features
