@@ -5,6 +5,7 @@ cmake_install.cmake
 install_manifest.txt
 CTestTestfile.cmake
 build/
+winbuild/
 *.dylib
 *.pyc
 *.sw*

@@ -50,13 +50,13 @@ void vas_close(vas_t *vas);
  * saves them to void*
  * The local and remote region may not overlap
  */
-ssize_t vas_read(vas_t *vas, const vas_addr_t, void*, size_t);
+int vas_read(vas_t *vas, const vas_addr_t, void*, size_t);
 
 /**
  * Write size_t to from vas_t at vas_addr_t from void*
  * The local and remote region may not overlap
  */
-ssize_t vas_write(vas_t*, vas_addr_t, const void*, size_t);
+int vas_write(vas_t*, vas_addr_t, const void*, size_t);
 
 /**
  * Effecient memory searching
@@ -85,9 +85,9 @@ struct vas_addrvec {
     size_t size;
 };
 
-ssize_t vas_readv(vas_t*, const struct vas_addrvec[], int vec_len);
+int vas_readv(vas_t*, const struct vas_addrvec[], int vec_len);
 
-ssize_t vas_writev(vas_t*, const struct vas_addrvec[], int vec_len);
+int vas_writev(vas_t*, const struct vas_addrvec[], int vec_len);
 
 
 vas_poll_t *vas_poll_new(vas_t*, vas_addr_t, size_t, int);

@@ -13,7 +13,7 @@ vas_poll_t *vas_poll_new(vas_t *vas, vas_addr_t addr, size_t size, int flags) {
     if (flags != 0)
         return NULL;
 
-    handle = malloc(sizeof *handle);
+    handle = (vas_poll_t*)malloc(sizeof *handle);
 
     handle->vas  = vas;
     handle->addr = addr;

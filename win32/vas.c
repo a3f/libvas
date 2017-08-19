@@ -41,7 +41,7 @@ vas_t *vas_open(pid_t pid, int flags) {
         return NULL;
     }
 
-    vas = malloc(sizeof *vas);
+    vas = (struct vas_t*)malloc(sizeof *vas);
     vas->pid = pid;
     vas->process = process;
 
@@ -53,11 +53,11 @@ void vas_close(vas_t *vas) {
     free(vas);
 }
 
-ssize_t vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
+int vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
     SIZE_T nbytes;
     BOOL success;
 
-    if (len > SSIZE_MAX)
+    if (len > INT_MAX)
         return -1;
 
     success = ReadProcessMemory(vas->process, (LPCVOID*)src, dst, len, &nbytes);
@@ -68,11 +68,11 @@ ssize_t vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
     return -1;
 }
 
-ssize_t vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len) {
+int vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len) {
     SIZE_T nbytes;
     BOOL success;
 
-    if (len > SSIZE_MAX)
+    if (len > INT_MAX)
         return -1;
 
     success = WriteProcessMemory(vas->process, (LPCVOID*)dst, src, len, &nbytes);

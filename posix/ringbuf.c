@@ -74,7 +74,7 @@ vas_ringbuf_t *vas_ringbuf_alloc(vas_t *vas, size_t pagecount, int flags) {
     require(ret == 0, fail);
 #endif
 
-    ringbuf = malloc(sizeof *ringbuf);
+    ringbuf = (vas_ringbuf_t*)malloc(sizeof *ringbuf);
     ringbuf->vas = vas;
     ringbuf->addr = addr;
     ringbuf->len = len;

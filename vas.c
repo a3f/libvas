@@ -31,7 +31,7 @@ vas_t *vas_open(pid_t pid, int flags) {
     if (pid == pid_self())
         return vas_self();
 
-    vas = malloc(sizeof *vas);
+    vas = (struct vas_t*)malloc(sizeof *vas);
     vas->pid = pid;
 
     return vas;
@@ -43,14 +43,14 @@ void vas_close(vas_t *vas) {
     free(vas);
 }
 
-ssize_t vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
+int vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
     (void)vas;
     memcpy(dst, (const void*)src, len);
 
     return len;
 }
 
-ssize_t vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len) {
+int vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len) {
     (void)vas;
     memcpy((void*)dst, src, len);
 

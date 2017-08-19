@@ -61,7 +61,7 @@ vas_t *vas_open(pid_t pid, int flags) {
         return NULL;
     }
 
-    vas = malloc(sizeof *vas);
+    vas = (struct vas_t*)malloc(sizeof *vas);
     vas->pid = pid;
     vas->memfd = fd;
     IF_NON_REENTRANT( vas->lock = PTHREAD_MUTEX_INITIALIZER; )
@@ -75,7 +75,7 @@ void vas_close(vas_t *vas) {
     free(vas);
 }
 
-ssize_t vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
+int vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
     ssize_t nbytes;
     IF_NON_REENTRANT( pthread_mutex_lock(vas->lock); )
         nbytes = pread(vas->memfd, dst, len, src);
@@ -87,7 +87,7 @@ ssize_t vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
     return -1;
 }
 
-ssize_t vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len) {
+int vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len) {
     ssize_t nbytes;
     IF_NON_REENTRANT( pthread_mutex_lock(vas->lock); )
         nbytes = pwrite(vas->memfd, src, len, dst);

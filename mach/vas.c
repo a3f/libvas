@@ -31,7 +31,7 @@ vas_t *vas_open(pid_t pid, int flags) {
     if (kret != KERN_SUCCESS) {
         return NULL;
     }
-    vas = malloc(sizeof *vas);
+    vas = (struct vas_t*)malloc(sizeof *vas);
     vas->port = port;
     vas->pid = pid;
 
@@ -43,11 +43,11 @@ void vas_close(vas_t *vas) {
     free(vas);
 }
 
-ssize_t vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
+int vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
     kern_return_t kret;
     ssize_t nbytes;
 
-    if (len > SSIZE_MAX)
+    if (len > INT_MAX)
         return -1;
 
     kret = mach_vm_read_overwrite(vas->port,
@@ -61,11 +61,11 @@ ssize_t vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
     return -1;
 }
 
-ssize_t vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len) {
+int vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len) {
     kern_return_t kret;
     ssize_t nbytes;
     
-    if (len > SSIZE_MAX)
+    if (len > INT_MAX)
         return -1;
 
     nbytes = len;
@@ -119,7 +119,7 @@ vas_poll_t *vas_poll_new(vas_t *vas, vas_addr_t addr, size_t size, int flags) {
         return NULL;
     }
 
-    handle = malloc(sizeof *handle);
+    handle = (vas_poll_t*)malloc(sizeof *handle);
 
     handle->vas  = vas;
     handle->addr = addr;

@@ -6,6 +6,9 @@ Multi-platform C lib for peeking/poking/handling virtual memory
     vas_read(proc, CHARACTER_HEALTH, &health, sizeof(uint32_t));
     printf("Character health is %" PRIu32 "\n", health);
 
+[![Build Status](https://travis-ci.org/a3f/libvas.svg?branch=master)](https://travis-ci.org/a3f/libvas)
+[![Build status](https://ci.appveyor.com/api/projects/status/q68mvjmksaide04c/branch/master?svg=true)](https://ci.appveyor.com/project/a3f/libvas/branch/master)
+
 ## Features
 
 - Multi-Platform: Runs on Windows, Linux, BSD, MacOS, GNU Hurd and a couple other systems
@@ -20,11 +23,11 @@ If Perl is available, you can run:
 
     cpan Alien::libvas
     # TODO: change to hardlink
-    cp -R $(perl -MAlien::libvas -e 'print Alien::libvas->dist_dir,"/share"') /usr/local/
+    cp -R $(perl -MAlien::libvas -e 'print Alien::libvas->dist_dir')/share/ /usr/local/share
 
-If not consider installing it, as it not only fetches CMake if unavailable and uses it to build the library but also runs the much more extensive perl-based test suite. See [Alien::libvas] for details.
+This fetches CMake if unavailable, uses it to build the library, installs the Perl wrapper and runs its test suite. See [Alien::libvas] for details.
 
-Afterwards you can use `pkg-config --libs libvas` and `pkg-config --cflags libvas` in your build script.
+Afterwards you can use `pkg-config --libs libvas` and `pkg-config --cflags libvas` in your build scripts.
 
 ### Manual install
 
