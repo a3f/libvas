@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(vas C)
-set(PROJECT_VERSION 0.41)
-set(CMAKE_BUILD_TYPE Debug)
+set(PROJECT_VERSION 0.5)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 INCLUDE (CheckIncludeFiles)
 INCLUDE (CheckTypeSize)
