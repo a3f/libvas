@@ -1,18 +1,57 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 2.8.0)
 project(vas C)
-set(PROJECT_VERSION 0.5)
-set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+set(PROJECT_VERSION 0.6)
 
 INCLUDE (CheckIncludeFiles)
 INCLUDE (CheckTypeSize)
-CHECK_INCLUDE_FILES(pid.h VAS_HAVE_PID_H)
+INCLUDE (CheckCSourceCompiles)
+INCLUDE (CheckCSourceRuns)
+INCLUDE (CheckSymbolExists)
+
+#for whatever reason this doesn't work:
+#CHECK_INCLUDE_FILES(ptrace.h HAVE_SYS_PTRACE_H)
+CHECK_C_SOURCE_COMPILES("#include <sys/types.h>
+       #include <sys/ptrace.h>
+      int main() { ptrace(0, 0, 0, 0); return 0; }"
+      HAVE_SYS_PTRACE_H)
+CHECK_INCLUDE_FILES(libpid.h VAS_HAVE_LIBPID_H)
 CHECK_INCLUDE_FILES(mach/mach.h HAVE_MACH_H)
-CHECK_TYPE_SIZE(off_t OFF_T)
-CHECK_TYPE_SIZE(pid_t PID_T)
-IF (HAVE_OFF_T)
+CHECK_INCLUDE_FILES(windows.h HAVE_WINDOWS_H)
+IF(HAVE_SYS_PTRACE_H)
+    SET(CMAKE_EXTRA_INCLUDE_FILES sys/ptrace.h)
+    CHECK_C_SOURCE_COMPILES("#include <sys/types.h>
+        #include <sys/ptrace.h>
+        int main() { ptrace(PTRACE_ATTACH, 0, 0, 0); return 0; }"
+        HAVE_PT_ATTACH)
+    CHECK_C_SOURCE_COMPILES("#include <sys/types.h>
+        #include <sys/ptrace.h>
+        int main() { ptrace(PT_ATTACHEXC, 0, 0, 0); return 0; }"
+        HAVE_PT_ATTACHEXC)
+    CHECK_C_SOURCE_COMPILES("#include <sys/types.h>
+        #include <sys/ptrace.h>
+        int main() { ptrace(PTRACE_PEEKDATA, 0, 0, 0); return 0; }"
+        HAVE_PTRACE_PEEKDATA)
+    CHECK_C_SOURCE_COMPILES("#include <sys/types.h>
+        #include <sys/ptrace.h>
+        int main() { ptrace(PT_READ_D, 0, 0, 0); return 0; }"
+        HAVE_PT_READ_D)
+    CHECK_C_SOURCE_COMPILES("#include <sys/types.h>
+        #include <sys/ptrace.h>
+        int main() { ptrace(PT_IO, 0, 0, 0); return 0; }"
+        HAVE_PT_IO)
+    CHECK_TYPE_SIZE("ptrace(0, 0, 0, 0)" SIZEOF_PTRACE_RET)
+    MESSAGE(STATUS "Return type of ptrace is ${SIZEOF_PTRACE_RET} bytes wide")
+    SET(CMAKE_EXTRA_INCLUDE_FILES)
+ENDIF(HAVE_SYS_PTRACE_H)
+CHECK_TYPE_SIZE(short SIZEOF_SHORT)
+CHECK_TYPE_SIZE(int   SIZEOF_INT)
+CHECK_TYPE_SIZE(long  SIZEOF_LONG)
+CHECK_TYPE_SIZE(off_t SIZEOF_OFF_T)
+CHECK_TYPE_SIZE(pid_t SIZEOF_PID_T)
+IF (HAVE_SIZEOF_OFF_T)
 SET(VAS_HAVE_OFF_T 1)
 ENDIF()
-IF (HAVE_PID_T)
+IF (HAVE_SIZEOF_PID_T)
 SET(VAS_HAVE_PID_T 1)
 ENDIF()
 CHECK_INCLUDE_FILES(sys/mman.h VAS_HAVE_MMAN_H)
@@ -24,6 +63,110 @@ CHECK_SYMBOL_EXISTS(MAP_ANON sys/mman.h HAVE_MAP_ANON)
 ENDIF()
 ENDIF(VAS_HAVE_MMAN_H)
 
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+set(CMAKE_MACOSX_RPATH ON)
+include_directories(include)
+include_directories(.)
+
+file(GLOB SOURCES info.c)
+
+STRING(REGEX MATCH "Linux" LINUX ${CMAKE_SYSTEM_NAME})
+STRING(REGEX MATCH "BSD" BSD ${CMAKE_SYSTEM_NAME})
+
+STRING(TOLOWER "${BACKEND}" BACKEND)
+
+# IF(EXISTS finds /proc/self/mem but not /proc/1/mem for whatever reason
+MESSAGE(STATUS "Checking for /proc/1/mem")
+EXECUTE_PROCESS(COMMAND [ -f /proc/1/mem ] RESULT_VARIABLE PROCFS_MEM_RETVAL)
+IF(PROCFS_MEM_RETVAL EQUAL 0)
+MESSAGE(STATUS "Checking for /proc/1/mem - found")
+ELSE()
+MESSAGE(STATUS "Checking for /proc/1/mem - not found")
+ENDIF()
+
+MESSAGE(STATUS "Checking for /proc/1/as")
+EXECUTE_PROCESS(COMMAND [ -f /proc/1/as ] RESULT_VARIABLE PROCFS_AS_RETVAL)
+IF(PROCFS_AS_RETVAL EQUAL 0)
+MESSAGE(STATUS "Checking for /proc/1/as - found")
+ELSE()
+MESSAGE(STATUS "Checking for /proc/1/as - not found")
+ENDIF()
+
+IF("${BACKEND}" STREQUAL "")
+    IF(WIN32)
+        SET(BACKEND win32)
+    ELSEIF(HAVE_MACH_H) # macOS and GNU Hurd
+        SET(BACKEND mach)
+    ELSEIF(PROCFS_MEM_RETVAL EQUAL 0) # Linux and more
+        SET(BACKEND procfs-mem)
+    ELSEIF(PROCFS_AS_RETVAL EQUAL 0) # SunOS/Solaris
+        SET(BACKEND procfs-as)
+    ELSEIF(HAVE_SYS_PTRACE_H) # BSD without procfs mounted, what else?
+        SET(BACKEND ptrace)    
+    ELSE() 
+        SET(BACKEND memcpy)
+    ENDIF()
+ENDIF()
+
+IF("${BACKEND}" STREQUAL win32)
+    MESSAGE("lib${PROJECT_NAME} will use WinAPI")
+    SET(VAS_USES_WINAPI 1)
+    file(GLOB SOURCES ${SOURCES} win32/*.c poll.c dup.c)
+
+ELSEIF("${BACKEND}" STREQUAL mach)
+    MESSAGE("lib${PROJECT_NAME} will use Mach VM API")
+    SET(VAS_USES_MACH 1)
+    file(GLOB SOURCES ${SOURCES} mach/*.c posix/fmap.c dup.c)
+
+ELSEIF("${BACKEND}" STREQUAL procfs-mem)
+    MESSAGE("lib${PROJECT_NAME} will use /procfs/$pid/mem")
+    SET(VAS_USES_PROCFS_MEM 1)
+    INCLUDE (CheckFunctionExists)
+        CHECK_FUNCTION_EXISTS(pwrite HAVE_PWRITE )
+        CHECK_FUNCTION_EXISTS(pread HAVE_PREAD)
+        IF (NOT HAVE_PWRITE OR NOT HAVE_PREAD)
+            MESSAGE(WARNING "using own implementation for pread/pwrite(2)")
+        ENDIF()
+    configure_file(config.h.in config.h)
+    file(GLOB SOURCES ${SOURCES} procfs-mem/*.c posix/*.c poll.c dup.c)
+    #add_definitions(-DHAS_WEAK_ALIAS)
+
+ELSEIF(${BACKEND} STREQUAL procfs-as)
+    MESSAGE("lib${PROJECT_NAME} will use /procfs/$pid/as")
+    SET(VAS_USES_PROCFS_AS 1)
+    INCLUDE (CheckFunctionExists)
+        CHECK_FUNCTION_EXISTS(pwrite HAVE_PWRITE )
+        CHECK_FUNCTION_EXISTS(pread HAVE_PREAD)
+        IF (NOT HAVE_PWRITE OR NOT HAVE_PREAD)
+            MESSAGE(WARNING "using own implementation for pread/pwrite(2)")
+        ENDIF()
+    configure_file(config.h.in config.h)
+    file(GLOB SOURCES ${SOURCES} procfs-as/*.c poll.c dup.c)
+    #add_definitions(-DHAS_WEAK_ALIAS)
+
+ELSEIF(BSD AND "${BACKEND}" STREQUAL ptrace)
+    MESSAGE("procfs not mounted. lib${PROJECT_NAME} will use ptrace(2) API")
+    SET(VAS_USES_PTRACE 1)
+    file(GLOB SOURCES ${SOURCES} ptrace/*.c poll.c dup.c)
+
+ELSEIF("${BACKEND}" STREQUAL ptrace)
+    MESSAGE("lib${PROJECT_NAME} will use ptrace(2) API")
+    SET(VAS_USES_PTRACE 1)
+    file(GLOB SOURCES ${SOURCES} ptrace/*.c posix/*.c poll.c dup.c)
+
+ELSEIF("${BACKEND}" STREQUAL memcpy)
+    MESSAGE("lib${PROJECT_NAME} will use memcpy")
+    SET(VAS_USES_MEMCPY 1)
+    MESSAGE(WARNING "It looks like we don't support this system yet,")
+    MESSAGE(WARNING "Falling back to trivial (own address space only) implementation.")
+    file(GLOB SOURCES ${SOURCES} *.c)
+
+ELSE()
+    MESSAGE(FATAL_ERROR "${BACKEND} is not a supported backend. Valid values are
+      win32, mach, procfs-mem, procfs-as, ptrace, memcpy
+      or just leave it empty")
+
+ENDIF()
 
 
 configure_file(vas.h.in vas.h)
@@ -34,56 +177,29 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/CFLAGS.cmake)
 
-include_directories(include)
-include_directories(.)
-
-file(GLOB SOURCES info.c)
-
-STRING(REGEX MATCH "Linux" LINUX ${CMAKE_SYSTEM_NAME})
-STRING(REGEX MATCH "BSD" BSD ${CMAKE_SYSTEM_NAME})
-
-IF(WIN32)
-    MESSAGE(STATUS "lib${PROJECT_NAME} will use WinAPI")
-    SET(VAS_USES_WINAPI 1)
-    file(GLOB SOURCES ${SOURCES} win32/*.c poll.c)
-
-ELSEIF(HAVE_MACH_H) # macOS and GNU Hurd
-    MESSAGE(STATUS "lib${PROJECT_NAME} will use Mach VM API")
-    SET(VAS_USES_MACH 1)
-    set(CMAKE_MACOSX_RPATH 1) 
-    file(GLOB SOURCES ${SOURCES} mach/*.c)
-
-ELSEIF(EXISTS "/proc/self/mem") # Linux and more
-    MESSAGE(STATUS "lib${PROJECT_NAME} will use procfs")
-    SET(VAS_USES_PROCFS 1)
-    # Are there procfs' which have no /proc/self symlink?
-    INCLUDE (CheckFunctionExists)
-        CHECK_FUNCTION_EXISTS(pwrite HAVE_PWRITE )
-        CHECK_FUNCTION_EXISTS(pread HAVE_PREAD)
-        IF (NOT HAVE_PWRITE OR NOT HAVE_PREAD)
-            MESSAGE(WARNING "using own implementation for pread/pwrite(2)")
-        ENDIF()
-    configure_file(config.h.in config.h)
-    file(GLOB SOURCES ${SOURCES} procfs/*.c poll.c)
-    #add_definitions(-DHAS_WEAK_ALIAS)
-
-ELSEIF(BSD)
-    MESSAGE(STATUS "lib${PROJECT_NAME} will use memcpy")
-    SET(VAS_USES_MEMCPY 1)
-    MESSAGE(WARNING "Please mount procfs and try again")
-    MESSAGE(WARNING "Falling back to trivial (own address space only) implementation.")
-    file(GLOB SOURCES ${SOURCES} *.c)
-
-ELSE()
-    MESSAGE(STATUS "lib${PROJECT_NAME} will use memcpy")
-    SET(VAS_USES_MEMCPY 1)
-    MESSAGE(WARNING "It looks like we don't support this system yet,")
-    MESSAGE(WARNING "Falling back to trivial (own address space only) implementation.")
-    file(GLOB SOURCES ${SOURCES} *.c)
-
-ENDIF(WIN32)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
+
+file(GLOB onself_src test/onself.c)
+add_executable(onself ${onself_src})
+target_link_libraries(onself ${PROJECT_NAME})
+set_target_properties(onself PROPERTIES OUTPUT_NAME "onself")
+
+file(GLOB readlong_src test/manual/readlong.c)
+add_executable(readlong ${readlong_src})
+target_link_libraries(readlong ${PROJECT_NAME})
+set_target_properties(readlong PROPERTIES OUTPUT_NAME "readlong")
+
+file(GLOB cow_src test/cow.c)
+add_executable(cow ${cow_src})
+target_link_libraries(cow ${PROJECT_NAME})
+set_target_properties(cow PROPERTIES OUTPUT_NAME "cow")
+
+file(GLOB ringbuf_src test/ringbuf.c)
+add_executable(ringbuf ${ringbuf_src})
+target_link_libraries(ringbuf ${PROJECT_NAME})
+set_target_properties(ringbuf PROPERTIES OUTPUT_NAME "ringbuf")
+
 
 # Install pkg-config pc
 install(FILES ${CMAKE_BINARY_DIR}/lib${PROJECT_NAME}.pc DESTINATION share/pkgconfig)
@@ -93,4 +209,10 @@ install (TARGETS ${PROJECT_NAME} DESTINATION lib)
 
 # Install library headers
 install(FILES ${CMAKE_BINARY_DIR}/vas.h ${CMAKE_BINARY_DIR}/vas-types.h DESTINATION include)
+
+# Testing
+enable_testing()
+add_test(ONSELF ${CMAKE_CURRENT_BINARY_DIR}/onself)
+add_test(COW ${CMAKE_CURRENT_BINARY_DIR}/cow)
+add_test(RINGBUF ${CMAKE_CURRENT_BINARY_DIR}/ringbuf)
 

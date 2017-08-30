@@ -1,3 +1,5 @@
+#define _XOPEN_SOURCE
+#define _XOPEN_SOURCE_EXTENDED /* for mkstemp */
 #include <vas.h>
 #include <vas-internal.h>
 #include <stdlib.h>
@@ -25,7 +27,7 @@ vas_ringbuf_t *vas_ringbuf_alloc(vas_t *vas, size_t pagecount, int flags) {
     void *addr, *half;
     size_t len = vas_pagesize() * pagecount;
 
-    (void)mapover_fd;
+    (void)mapover_fd; (void)flags;
 
     if (vas != vas_self())
         return NULL;

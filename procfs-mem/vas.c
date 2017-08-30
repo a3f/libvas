@@ -11,19 +11,22 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/ptrace.h>
 
 /* (racy) alternatives for when pread/pwrite aren't available */
 #if !HAVE_PREAD
-static ssize_t pread(int fd, void *buf, size_t count, off_t offset) {
+static ssize_t my_pread(int fd, void *buf, size_t count, off_t offset) {
     if (lseek(fd, offset, SEEK_SET) == -1) return -1;
     return read(fd, buf, count);
 }
+#define pread my_pread
 #endif
 #if !HAVE_PWRITE
-static ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset) {
+static ssize_t my_pwrite(int fd, const void *buf, size_t count, off_t offset) {
     if (lseek(fd, offset, SEEK_SET) == -1) return -1;
     return write(fd, buf, count);
 }
+#define pwrite my_pwrite
 #endif
 
 #if !(defined(HAVE_PREAD) && defined(HAVE_PWRITE)) && defined(_REENTRANT)
@@ -40,6 +43,16 @@ struct vas_t {
     int memfd;
     IF_NON_REENTRANT( pthread_mutex_t lock; )
 };
+
+vas_t *vas_self(void) {
+    static vas_t self;
+    if (self.pid == 0) {
+        self.pid  = -1;
+        self.memfd = open("/proc/self/mem", O_RDWR);
+    }
+
+    return &self;
+}
 
 
 vas_t *vas_open(pid_t pid, int flags) {
@@ -60,6 +73,7 @@ vas_t *vas_open(pid_t pid, int flags) {
     if (fd < 0) {
         return NULL;
     }
+    /* ptrace(PTRACE_ATTACH, pid, NULL, NULL); */
 
     vas = (struct vas_t*)malloc(sizeof *vas);
     vas->pid = pid;
@@ -70,6 +84,9 @@ vas_t *vas_open(pid_t pid, int flags) {
 }
 
 void vas_close(vas_t *vas) {
+    if (vas == vas_self())
+        return;
+    /* ptrace(PTRACE_DETACH, vas->pid, NULL, NULL); */
     close(vas->memfd);
     IF_NON_REENTRANT( pthread_mutex_destroy(vas->lock); )
     free(vas);
@@ -98,6 +115,4 @@ int vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len) {
 
     return -1;
 }
-
-
 

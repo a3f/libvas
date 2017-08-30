@@ -5,5 +5,32 @@
 #cmakedefine HAVE_PREAD 1
 #cmakedefine HAVE_PWRITE 1
 #cmakedefine HAVE_MACH_H 1
+#cmakedefine HAVE_PTRACE_ATTACH 1
+#cmakedefine HAVE_PT_ATTACHEXC 1
+#cmakedefine HAVE_PTRACE_PEEKDATA 1
+#cmakedefine HAVE_PT_READ_D 1
+#cmakedefine HAVE_PT_IO 1
+
+${SIZEOF_PTRACE_RET_CODE}
+${SIZEOF_SHORT_CODE}
+${SIZEOF_INT_CODE}
+${SIZEOF_LONG_CODE}
+${SIZEOF_OFF_T_CODE}
+${SIZEOF_PID_T_CODE}
+
+#if SIZEOF_PTRACE_RET == SIZEOF_LONG
+    typedef long ptrace_word;
+#elif SIZEOF_PTRACE_RET == SIZEOF_INT
+    typedef int ptrace_word;
+
+    /* Unlikely, but why not? */
+#elif SIZEOF_PTRACE_RET == SIZEOF_SHORT
+    typedef short ptrace_word;
+#elif SIZEOF_PTRACE_RET == 1
+    typedef signed char ptrace_word;
+#else
+    #define PTRACE_RET_NO_NATIVE_TYPE 1
+#endif
+
 
 #endif

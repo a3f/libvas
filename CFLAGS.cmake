@@ -7,5 +7,5 @@ if(MSVC)
   endif()
 elseif (("${CMAKE_C_COMPILER_ID}" MATCHES ".*Clang") OR ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel"))
   # Update if necessary
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wc++-compat -pedantic -std=c89")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wc++-compat -pedantic -std=c89 -g3")
 endif()

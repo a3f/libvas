@@ -150,5 +150,3 @@ int vas_pagesize(void) {
     kern_return_t ret = host_page_size(mach_host_self(), &size);
     return ret == KERN_SUCCESS ? size : -1;
 }
-
-

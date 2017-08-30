@@ -19,60 +19,60 @@ typedef struct vas_poll_t vas_poll_t;
 #define VAS_PTR_64BIT (${CMAKE_SIZEOF_VOID_P} == 8)
 #define VAS_PTR_32BIT (${CMAKE_SIZEOF_VOID_P} == 4)
 
-#if __STDC_VERSION__ >= 199901L /* C99 */
+#if __STDC_VERSION__ >= 199901L || __cplusplus >= 201103L
 
-/**
- * Unsigned data type.
- * References a _data_ address in a virtual address space
- */
+    /**
+     * Unsigned data type.
+     * References a _data_ address in a virtual address space
+     */
 
-#include <stdint.h>
-#ifdef UINTPTR_MAX
- typedef uintptr_t vas_addr_t;
-#else
- typedef unsigned long long vas_addr_t;
-#endif /* UINTPTR_MAX */
-
-#else
-
-#if !VAS_IS_WIN32
-typedef unsigned long vas_addr_t;
+    #include <stdint.h>
+    #ifdef UINTPTR_MAX
+        typedef uintptr_t vas_addr_t;
+    #else
+        typedef unsigned long long vas_addr_t;
+    #endif /* UINTPTR_MAX */
 
 #else
 
-#if VAS_PTR_64BIT
- typedef unsigned __int64 vas_addr_t;
-#elif VAS_PTR_32BIT
- typedef unsigned long vas_addr_t;
-#else
-#error "CMake misconfiguration or very peculiar Windows detected"
-#endif /* VAS_PTR_64BIT */
+    #if !VAS_IS_WIN32
+        typedef unsigned long vas_addr_t;
 
-#endif /* !VAS_IS_WIN32 */
+    #else
+
+        #if VAS_PTR_64BIT
+            typedef unsigned __int64 vas_addr_t;
+        #elif VAS_PTR_32BIT
+            typedef unsigned long vas_addr_t;
+        #else
+            #error "CMake misconfiguration or very peculiar Windows detected"
+        #endif /* VAS_PTR_64BIT */
+
+    #endif /* !VAS_IS_WIN32 */
 #endif /* __STDC_VERSION__ >= 199901L */
 
-#if VAS_HAVE_PID_H
-#include <pid.h>
+#if VAS_HAVE_LIBPID_H
+    #include <libpid.h>
 #elif VAS_HAVE_PID_T
-#include <sys/types.h>
+    #include <sys/types.h>
 #elif VAS_IS_WIN32
-typedef unsigned long pid_t;
+    typedef unsigned long pid_t;
 #else
-#error "pid_t undefined (Maybe install libpid?)"
-#endif /* VAS_HAVE_PID_H */
+    #error "pid_t undefined (Maybe install libpid?)"
+#endif /* VAS_HAVE_LIBPID_H */
 
 #ifdef VAS_HAVE_OFF_T
-#include <sys/types.h>
+    #include <sys/types.h>
 #else
-typedef signed long off_t;
+    typedef signed long off_t;
 #endif /* VAS_HAVE_OFF_T */
 
 
 #ifdef VAS_HAVE_MMAN_H
-#include <sys/mman.h>
-enum {
-    VAS_MAP_SHARED = MAP_SHARED, VAS_MAP_PRIVATE = MAP_PRIVATE
-};
+    #include <sys/mman.h>
+    enum {
+        VAS_MAP_SHARED = MAP_SHARED, VAS_MAP_PRIVATE = MAP_PRIVATE
+    };
 #endif
 
 

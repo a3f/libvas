@@ -31,8 +31,9 @@ build_script:
   - if [%COMPILER%]==[MinGW-w64] cmake -G "MinGW Makefiles" ..
   - if [%COMPILER%]==[MSVC15] if [%PLATFORM%]==[Win32] cmake -G "Visual Studio 14 2015" ..
   - if [%COMPILER%]==[MSVC15] if [%PLATFORM%]==[x64]   cmake -G "Visual Studio 14 2015 Win64" ..
-  - cmake --build . --target install
+  - cmake --build .
 
 before_test:
 
 test_script:
+  - ctest --output-on-failure

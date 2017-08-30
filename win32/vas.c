@@ -42,6 +42,8 @@ vas_t *vas_open(pid_t pid, int flags) {
     }
 
     vas = (struct vas_t*)malloc(sizeof *vas);
+    if (!vas) return NULL;
+
     vas->pid = pid;
     vas->process = process;
 
@@ -49,6 +51,8 @@ vas_t *vas_open(pid_t pid, int flags) {
 }
 
 void vas_close(vas_t *vas) {
+    if (vas == vas_self())
+        return;
     CloseHandle(vas->process);
     free(vas);
 }
@@ -88,6 +92,4 @@ int vas_pagesize(void) {
     GetSystemInfo(&system_info);
     return system_info.dwPageSize;
 }
-
-
 

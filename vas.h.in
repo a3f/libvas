@@ -2,12 +2,14 @@
 #define LIBVAS_VAS_H_
 
 #define VAS_VERSION "${PROJECT_VERSION}"
-#cmakedefine VAS_HAVE_PID_H  1
-#cmakedefine VAS_HAVE_MMAN_H 1
-#cmakedefine VAS_USES_MEMCPY 1
-#cmakedefine VAS_USES_WINAPI 2
-#cmakedefine VAS_USES_MACH   4
-#cmakedefine VAS_USES_PROCFS 8
+#cmakedefine VAS_HAVE_LIBPID_H   1
+#cmakedefine VAS_HAVE_MMAN_H     1
+#cmakedefine VAS_USES_MEMCPY     1
+#cmakedefine VAS_USES_WINAPI     2
+#cmakedefine VAS_USES_MACH       4
+#cmakedefine VAS_USES_PROCFS_MEM 8
+#cmakedefine VAS_USES_PROCFS_AS  16
+#cmakedefine VAS_USES_PTRACE     32
 
 #include "vas-types.h"
 
@@ -90,22 +92,34 @@ int vas_readv(vas_t*, const struct vas_addrvec[], int vec_len);
 int vas_writev(vas_t*, const struct vas_addrvec[], int vec_len);
 
 
+/**
+ * Poll a buffer for changes
+ * On supporting platforms, this remaps the page, saving subsequent TLB flushes
+ */
 vas_poll_t *vas_poll_new(vas_t*, vas_addr_t, size_t, int);
 int vas_poll(vas_poll_t*, void*);
 void vas_poll_del(vas_poll_t*);
 
 
 /**
- * Duplicate
+ * Duplicate in malloc allocated space
  */
 void *vas_dup(vas_t*, const vas_addr_t, size_t);
 
+#ifdef VAS_USES_MACH
 /**
  * Duplicate with CoW-Semantics if possible
- * NOTE: This will most likely involve a TLB flush on your system,
+ * CoW is possible if vas_dup_cow != vas_dup
+ * \NOTE This will most likely involve a TLB flush on your system,
  *       So, it's not a silver bullet.
  */
 void *vas_dup_cow(vas_t*, const vas_addr_t, size_t);
+int vas_dup_cow_free(vas_t *vas, void* addr, size_t len);
+#else
+#include <stdlib.h>
+#define vas_dup_cow vas_dup
+#define vas_dup_cow_free(vas, addr, len) (free(addr), 0)
+#endif
 
 
 #endif

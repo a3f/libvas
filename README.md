@@ -11,7 +11,7 @@ Multi-platform C lib for peeking/poking/handling virtual memory
 
 ## Features
 
-- Multi-Platform: Runs on Windows, Linux, BSD, MacOS, GNU Hurd and a couple other systems
+- Multi-Platform: Runs on Windows, Linux, BSD, MacOS, GNU Hurd, SunOS and a couple other systems
 - Read/Write/Remap other processes' memory
 - Allocate those nifty virtual-memory-mirrored ring buffers
 - Duplicate memory with Copy-on-Write semantics
@@ -22,8 +22,7 @@ Multi-platform C lib for peeking/poking/handling virtual memory
 If Perl is available, you can run:
 
     cpan Alien::libvas
-    # TODO: change to hardlink
-    cp -R $(perl -MAlien::libvas -e 'print Alien::libvas->dist_dir')/share/ /usr/local/share
+    ln $(perl -MAlien::libvas -e 'print Alien::libvas->dist_dir')/share/pkgconfig/libvas.pc /usr/local/share/pkgconfig/
 
 This fetches CMake if unavailable, uses it to build the library, installs the Perl wrapper and runs its test suite. See [Alien::libvas] for details.
 
@@ -35,6 +34,19 @@ Afterwards you can use `pkg-config --libs libvas` and `pkg-config --cflags libva
     mkdir build && cd build
     cmake ..
     make install
+
+## Backends
+
+Multiple backends are available, each corresponding to a directory in the source hierarchy:
+
+    • win32      - Windows API
+    • mach       - Mach Virtual Memory API - macOS and GNU Hurd
+    • procfs-mem - /proc/$pid/mem on Linux and some BSDs
+    • procfs-as  - /proc/$pid/as on SunOS/Solaris
+    • ptrace     - ptrace(2), available on many Unices
+    • memcpy     - Trivial implementation that doesn't supports foreign address spaces
+
+The appropriate backend is selected by CMake at configuration time. You can override the selection by specifying e.g. '-DBACKEND=ptrace' when invoking `cmake`.
 
 ## Wrappers
 

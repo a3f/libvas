@@ -19,3 +19,13 @@ fail:
     return NULL;
 }
 
+int vas_dup_cow_free(vas_t *vas, void* addr, size_t len) {
+    kern_return_t ret;
+
+    ret = vm_deallocate(vas->port, (vm_address_t)addr, len);
+    require(ret == KERN_SUCCESS, fail);
+    return 0;
+
+fail:
+    return -1;
+}
