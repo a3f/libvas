@@ -34,8 +34,11 @@ Afterwards you can use `pkg-config --libs libvas` and `pkg-config --cflags libva
     mkdir build && cd build
     cmake ..
     make install
+    ctest
 
-## Backends
+Some manual tests/examples are available in `test/manual/`. The appliable tests in `test/` are run automatically on `ctest`.
+
+## Platforms
 
 Multiple backends are available, each corresponding to a directory in the source hierarchy:
 
@@ -48,6 +51,8 @@ Multiple backends are available, each corresponding to a directory in the source
     • memcpy     - Trivial implementation that doesn't supports foreign address spaces
 
 The appropriate backend is selected by CMake at configuration time. You can override the selection by specifying e.g. `cmake -DBACKEND=ptrace`.
+
+libvas has no external non-OS dependencies and is written in C++-compatible C89 and should compilable by any standard C or C++ compiler.
 
 ## Wrappers
 
