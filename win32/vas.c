@@ -18,7 +18,7 @@ struct vas_t {
 };
 
 vas_t *vas_self(void) {
-    static vas_t self = {0, 0};
+    static vas_t self;
     if (self.pid == 0) {
         self.pid  = GetCurrentProcessId();
         self.process = GetCurrentProcess();

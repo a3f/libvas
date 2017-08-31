@@ -235,6 +235,11 @@ ENDFOREACH()
 
 
 SET(MANUAL_TESTS readlong)
+
+IF(WIN32)
+    LIST(APPEND MANUAL_TESTS tibia-healer)
+ENDIF()
+
 foreach(T ${MANUAL_TESTS})
     file(GLOB ${T}_src test/manual/${T}.c)
     add_executable(${T} ${${T}_src})
