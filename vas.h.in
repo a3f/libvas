@@ -26,10 +26,23 @@ const char *vas_get_version(void);
 
 /**
  * @returns pointer to static handle
+ *          or NULL if operations on self aren't supported for the backend
  *
  * Retrieves the handle of the current VAS
  */
 vas_t *vas_self(void);
+
+/* TODO some vas_error() function */
+enum {
+    VAS_O_FORCE_SELF   = 1, /** Allow vas_open on own pid even if vas_self() == NULL **/
+    VAS_O_REPORT_ERROR = 2, /** Report errors to stderr, except for malloc returning NULL
+                                This is still work in progress. not all functions
+                                report errors **/
+
+
+    VAS_O_NOP          = 0
+};
+
 
 /**
  * @param pid   process id

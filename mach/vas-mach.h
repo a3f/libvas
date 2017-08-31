@@ -4,6 +4,7 @@
 #include "vas.h"
 #include <mach/mach.h>
 struct vas_t {
+    int flags;
     pid_t pid;
     mach_port_t port;
 };

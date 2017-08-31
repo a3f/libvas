@@ -2,32 +2,33 @@ language: c
 sudo: required
 dist: trusty
 
-os:
-  - osx
-  - linux
+matrix:
+    include:
+        - os: linux
+          env: CC=gcc CFLAGS=-m32 LDFLAGS=-m32
+        - os: linux
+          env: CC=clang CFLAGS=-m64 LDFLAGS=-m64
+        - os: linux
+          env: CC=clang CFLAGS=-m64 LDFLAGS=-m64 BACKEND=ptrace
+        - os: osx
+          env: CC=clang CFLAGS=-m32 LDFLAGS=-m32
+        - os: osx
+          env: CC=gcc CFLAGS=-m64 LDFLAGS=-m64
 
-compiler:
-  - clang
-  - gcc
-
-env:
-  global:
-    - VERBOSE=1
-  matrix:
-    - CFLAGS=-m64 LDFLAGS=-m64
-    - CFLAGS=-m32 LDFLAGS=-m32
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install gcc-multilib ;  fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$CC" == "gcc" ]]; then export CC=gcc-4.9 ; fi
-  - $CC --version
+    - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then sudo apt-get install gcc-multilib ; fi
+    - if [ "$TRAVIS_OS_NAME" == "osx" && "$CC" == "gcc" ] ; then export CC=gcc-4.9 ; fi
+    - $CC --version
 
 before_script:
+    - export VERBOSE=1
 
 script:
-  - mkdir -p build
-  - cd build 
-  - cmake ..
-  - make
-  - sudo make install
-  - ctest --output-on-failure
+    - mkdir -p build
+    - cd build
+    - cmake -DBACKEND=$BACKEND ..
+    - make
+    - sudo make install
+    - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then ctest --output-on-failure ; fi
+    - if [ "$TRAVIS_OS_NAME" == "osx" ] ; then sudo ctest --output-on-failure ; fi

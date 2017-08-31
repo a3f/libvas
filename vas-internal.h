@@ -1,15 +1,20 @@
 #ifndef VAS_INTERNAL_H_
 #define VAS_INTERNAL_H_
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <vas.h>
+
 #ifdef __GNUC__ 
 #define likely(cond)       __builtin_expect((cond), 1)
 #define unlikely(cond)     __builtin_expect((cond), 0)
 #else
-#define likely(cond) (cond)
-#define unlikely(cond) (cond)
+#define likely(cond) cond
+#define unlikely(cond) cond
 #endif
 
-#include <stdio.h>
+#define TOSTR_(arg) #arg
+#define TOSTR(arg)  TOSTR_(arg)
 
 #define require(cond, label)        \
     do {                            \
@@ -31,5 +36,15 @@
     #define pid_self getpid
 #endif
 
+#define vas_exit abort
+
+#define vas_die_on(cond) do { if (cond) vas_exit(); } while (0)
+
+#define vas_report(str) do {                              \
+    if (vas->flags & VAS_O_REPORT_ERROR) {                \
+        fputs(__FILE__ ":" TOSTR(__LINE__) ": ", stderr); \
+        perror(str);                                      \
+    }                                                     \
+} while(0)
 
 #endif

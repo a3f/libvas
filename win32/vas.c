@@ -14,6 +14,7 @@
 struct vas_t {
     pid_t pid;
     HANDLE process;
+    int flags;
 };
 
 vas_t *vas_self(void) {
@@ -30,7 +31,11 @@ vas_t *vas_open(pid_t pid, int flags) {
     struct vas_t *vas;
     HANDLE process;
 
-    if (flags != 0) return NULL;
+    if (flags & ~(VAS_O_REPORT_ERROR | VAS_O_FORCE_SELF)) {
+        if (flags & VAS_O_REPORT_ERROR)
+            fputs("Unknown bit in flags parameter\n", stderr);
+        return NULL;
+    }
 
     process = OpenProcess(
             PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE |
@@ -46,6 +51,7 @@ vas_t *vas_open(pid_t pid, int flags) {
 
     vas->pid = pid;
     vas->process = process;
+    vas->flags = flags;
 
     return vas;
 }

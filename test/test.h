@@ -14,40 +14,40 @@
 #else
 
 
-#define IS(a, b, str) do {                                              \
-    if (a == b) continue;                                               \
-    fprintf(stderr, "%s:%d: Equality test \"%s\" (" #a " == " #b ")\n", \
-                    __FILE__, __LINE__, str);                           \
-    fprintf(stderr, "     got: %ld", (long)a);                          \
-    fprintf(stderr, "expected: %ld", (long)b);                          \
-    exit(6);                                                            \
+#define IS(a, b, str) do {                                                \
+    if (a == b) continue;                                                 \
+    fprintf(stderr, "%s:%d: Equality test \"%s\" (" #a " == " #b ")\n",   \
+                    __FILE__, __LINE__, str);                             \
+    fprintf(stderr, "     got: %ld\n", (long)a);                          \
+    fprintf(stderr, "expected: %ld\n", (long)b);                          \
+    abort();                                                              \
 } while (0)
 
-#define IS_HEX(a, b, str) do {                                          \
-    if (a == b) continue;                                               \
-    fprintf(stderr, "%s:%d: Equality test \"%s\" (" #a " == " #b ")\n", \
-                    __FILE__, __LINE__, str);                           \
-    fprintf(stderr, "     got: %lx", (long)a);                          \
-    fprintf(stderr, "expected: %lx", (long)b);                          \
-    exit(6);                                                            \
+#define IS_HEX(a, b, str) do {                                            \
+    if (a == b) continue;                                                 \
+    fprintf(stderr, "%s:%d: Equality test \"%s\" (" #a " == " #b ")\n",   \
+                    __FILE__, __LINE__, str);                             \
+    fprintf(stderr, "     got: %lx\n", (long)a);                          \
+    fprintf(stderr, "expected: %lx\n", (long)b);                          \
+    abort();                                                              \
 } while (0)
 
 #define ISNT(a, b, str) do {                                              \
     if (a != b) continue;                                                 \
     fprintf(stderr, "%s:%d: Inequality test \"%s\" (" #a " != " #b ")\n", \
                     __FILE__, __LINE__, str);                             \
-    fprintf(stderr, "       got: %ld", (long)a);                          \
-    fprintf(stderr, "unexpected: %ld", (long)b);                          \
-    exit(6);                                                              \
+    fprintf(stderr, "       got: %ld\n", (long)a);                        \
+    fprintf(stderr, "unexpected: %ld\n", (long)b);                        \
+    abort();                                                              \
 } while (0)
 
 #define ISNT_HEX(a, b, str) do {                                          \
     if (a != b) continue;                                                 \
     fprintf(stderr, "%s:%d: Inequality test \"%s\" (" #a " != " #b ")\n", \
                     __FILE__, __LINE__, str);                             \
-    fprintf(stderr, "       got: %lx", (long)a);                          \
-    fprintf(stderr, "unexpected: %lx", (long)b);                          \
-    exit(6);                                                              \
+    fprintf(stderr, "       got: %lx\n", (long)a);                        \
+    fprintf(stderr, "unexpected: %lx\n", (long)b);                        \
+    abort();                                                              \
 } while (0)
 
 #endif

@@ -13,13 +13,15 @@ int main(void) {
     vas_poll_t *poller;
     vas_addr_t addr = (vas_addr_t)&val;
 
-    procs[0] = vas_self();
-    ISNT(procs[0], NULL, "vas_self() not NULL");
-    procs[1] = vas_open(pid_self(), 0);
-    ISNT(procs[1], NULL, "vas_open() on own pid");
+    procs[0] = vas_open(pid_self(), VAS_O_REPORT_ERROR);
+    ISNT(procs[0], NULL, "vas_open() on self");
+    procs[1] = vas_self();
+    ISNT(procs[1], NULL, "vas_self() possible");
     procs[2] = NULL;
 
     for (proc = procs; *proc; proc++) {
+        if (proc == &procs[0]) puts("vas_open():");
+        if (proc == &procs[1]) puts("vas_self():");
 
         val = 0;
         nbytes = vas_read(*proc, addr, &copy, sizeof (long));
@@ -35,7 +37,7 @@ int main(void) {
         copy = -1;
         nbytes = vas_write(*proc, (vas_addr_t)&copy, (void*)addr, sizeof (long));
         IS(nbytes, sizeof(long), "Writing a word");
-        IS(copy, 2, "Read value is correct");
+        IS(copy, 2, "Written value is correct");
 
 
         poller = vas_poll_new(*proc, addr, sizeof (long), 0);

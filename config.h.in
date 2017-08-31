@@ -32,5 +32,11 @@ ${SIZEOF_PID_T_CODE}
     #define PTRACE_RET_NO_NATIVE_TYPE 1
 #endif
 
+/* Large file support */
+#cmakedefine _LARGEFILE_SOURCE
+#cmakedefine _LARGEFILE64_SOURCE
+#cmakedefine _LARGE_FILES
+#cmakedefine _FILE_OFFSET_BITS @_FILE_OFFSET_BITS@
+
 
 #endif

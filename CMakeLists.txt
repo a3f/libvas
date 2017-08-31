@@ -1,12 +1,13 @@
 cmake_minimum_required(VERSION 2.8.0)
 project(vas C)
-set(PROJECT_VERSION 0.6)
+set(PROJECT_VERSION 0.7)
 
 INCLUDE (CheckIncludeFiles)
 INCLUDE (CheckTypeSize)
 INCLUDE (CheckCSourceCompiles)
 INCLUDE (CheckCSourceRuns)
 INCLUDE (CheckSymbolExists)
+set (CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 #for whatever reason this doesn't work:
 #CHECK_INCLUDE_FILES(ptrace.h HAVE_SYS_PTRACE_H)
@@ -43,11 +44,17 @@ IF(HAVE_SYS_PTRACE_H)
     MESSAGE(STATUS "Return type of ptrace is ${SIZEOF_PTRACE_RET} bytes wide")
     SET(CMAKE_EXTRA_INCLUDE_FILES)
 ENDIF(HAVE_SYS_PTRACE_H)
+
+include(gmxTestLargeFiles)
+gmx_test_large_files(GMX_LARGEFILES)
+
 CHECK_TYPE_SIZE(short SIZEOF_SHORT)
 CHECK_TYPE_SIZE(int   SIZEOF_INT)
 CHECK_TYPE_SIZE(long  SIZEOF_LONG)
 CHECK_TYPE_SIZE(off_t SIZEOF_OFF_T)
 CHECK_TYPE_SIZE(pid_t SIZEOF_PID_T)
+CHECK_SYMBOL_EXISTS(fork unistd.h HAVE_FORK)
+CHECK_SYMBOL_EXISTS(CreateProcessW windows.h HAVE_CREATEPROCESS)
 IF (HAVE_SIZEOF_OFF_T)
 SET(VAS_HAVE_OFF_T 1)
 ENDIF()
@@ -62,6 +69,8 @@ IF (NOT HAVE_MAP_ANONYMOUS)
 CHECK_SYMBOL_EXISTS(MAP_ANON sys/mman.h HAVE_MAP_ANON)
 ENDIF()
 ENDIF(VAS_HAVE_MMAN_H)
+
+
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 set(CMAKE_MACOSX_RPATH ON)
@@ -101,8 +110,9 @@ IF("${BACKEND}" STREQUAL "")
         SET(BACKEND procfs-mem)
     ELSEIF(PROCFS_AS_RETVAL EQUAL 0) # SunOS/Solaris
         SET(BACKEND procfs-as)
-    ELSEIF(HAVE_SYS_PTRACE_H) # BSD without procfs mounted, what else?
-        SET(BACKEND ptrace)    
+    ELSEIF(HAVE_SYS_PTRACE_H AND NOT APPLE) # BSD without procfs mounted, what else?
+        SET(BACKEND ptrace)                 # macOS always reports EBUSY instead of proper ESYS
+
     ELSE() 
         SET(BACKEND memcpy)
     ENDIF()
@@ -153,6 +163,7 @@ ELSEIF("${BACKEND}" STREQUAL ptrace)
     MESSAGE("lib${PROJECT_NAME} will use ptrace(2) API")
     SET(VAS_USES_PTRACE 1)
     file(GLOB SOURCES ${SOURCES} ptrace/*.c posix/*.c poll.c dup.c)
+    SET(CANT_SELFTEST 1)
 
 ELSEIF("${BACKEND}" STREQUAL memcpy)
     MESSAGE("lib${PROJECT_NAME} will use memcpy")
@@ -160,6 +171,7 @@ ELSEIF("${BACKEND}" STREQUAL memcpy)
     MESSAGE(WARNING "It looks like we don't support this system yet,")
     MESSAGE(WARNING "Falling back to trivial (own address space only) implementation.")
     file(GLOB SOURCES ${SOURCES} *.c)
+    SET(CAN_ONLY_SELFTEST 1)
 
 ELSE()
     MESSAGE(FATAL_ERROR "${BACKEND} is not a supported backend. Valid values are
@@ -180,25 +192,44 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/CFLAGS.cmake)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
-file(GLOB onself_src test/onself.c)
-add_executable(onself ${onself_src})
-target_link_libraries(onself ${PROJECT_NAME})
-set_target_properties(onself PROPERTIES OUTPUT_NAME "onself")
+# Tests
 
-file(GLOB readlong_src test/manual/readlong.c)
-add_executable(readlong ${readlong_src})
-target_link_libraries(readlong ${PROJECT_NAME})
-set_target_properties(readlong PROPERTIES OUTPUT_NAME "readlong")
+SET(AUTO_TESTS onself cow ringbuf)
 
-file(GLOB cow_src test/cow.c)
-add_executable(cow ${cow_src})
-target_link_libraries(cow ${PROJECT_NAME})
-set_target_properties(cow PROPERTIES OUTPUT_NAME "cow")
+IF(HAVE_FORK)
+    LIST(APPEND AUTO_TESTS onchild_fork)
+ELSEIF(HAVE_CREATEPROCESS)
+ENDIF(HAVE_FORK)
 
-file(GLOB ringbuf_src test/ringbuf.c)
-add_executable(ringbuf ${ringbuf_src})
-target_link_libraries(ringbuf ${PROJECT_NAME})
-set_target_properties(ringbuf PROPERTIES OUTPUT_NAME "ringbuf")
+enable_testing()
+
+foreach(T ${AUTO_TESTS})
+    file(GLOB ${T}_src test/${T}.c)
+    add_executable(${T} ${${T}_src})
+    target_link_libraries(${T} ${PROJECT_NAME})
+    set_target_properties(${T} PROPERTIES OUTPUT_NAME "${T}")
+endforeach(T)
+
+IF(CANT_SELFTEST)
+    LIST(REMOVE_ITEM AUTO_TESTS onself cow)
+ENDIF()
+
+IF(CAN_ONLY_SELFTEST)
+    LIST(REMOVE_ITEM AUTO_TESTS onchild_fork)
+ENDIF()
+
+FOREACH(T ${AUTO_TESTS}) 
+    add_test(${T} ${CMAKE_CURRENT_BINARY_DIR}/${T})
+ENDFOREACH()
+
+
+SET(MANUAL_TESTS readlong)
+foreach(T ${MANUAL_TESTS})
+    file(GLOB ${T}_src test/manual/${T}.c)
+    add_executable(${T} ${${T}_src})
+    target_link_libraries(${T} ${PROJECT_NAME})
+    set_target_properties(${T} PROPERTIES OUTPUT_NAME "${T}")
+endforeach(T)
 
 
 # Install pkg-config pc
@@ -210,9 +241,4 @@ install (TARGETS ${PROJECT_NAME} DESTINATION lib)
 # Install library headers
 install(FILES ${CMAKE_BINARY_DIR}/vas.h ${CMAKE_BINARY_DIR}/vas-types.h DESTINATION include)
 
-# Testing
-enable_testing()
-add_test(ONSELF ${CMAKE_CURRENT_BINARY_DIR}/onself)
-add_test(COW ${CMAKE_CURRENT_BINARY_DIR}/cow)
-add_test(RINGBUF ${CMAKE_CURRENT_BINARY_DIR}/ringbuf)
 

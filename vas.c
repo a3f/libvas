@@ -1,12 +1,13 @@
 #include "vas.h"
+#include "vas-internal.h"
 
 #include <stdlib.h>
 #include <string.h>
-#include <vas-internal.h>
 
 
 
 struct vas_t {
+    int flags;
     pid_t pid;
 };
 
@@ -19,8 +20,6 @@ vas_t *vas_self(void) {
 }
 
 vas_t *vas_open(pid_t pid, int flags) {
-    struct vas_t *vas;
-
     if (flags != 0) return NULL;
 
     if (pid == pid_self())

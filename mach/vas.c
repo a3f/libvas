@@ -1,4 +1,5 @@
 #include "vas.h"
+#include "vas-internal.h"
 #include "vas-mach.h"
 
 #include <mach/mach.h>
@@ -9,6 +10,7 @@
 #include <sys/types.h>
 #include <limits.h>
 
+#include <stdio.h>
 #include <stdlib.h>
 
 vas_t *vas_self(void) {
@@ -21,22 +23,33 @@ vas_t *vas_self(void) {
     return &self;
 }
 
+/* Currently needs sudo, even for child processes. Proper way:
+ * https://github.com/mbebenita/rustdbg/blob/2da16c70fa29564971478eb0b5619b61a61803a3/lib/src/MDBShared.cpp
+ */
+
 vas_t *vas_open(pid_t pid, int flags) {
     struct vas_t *vas;
     mach_port_t port;
     kern_return_t kret;
-    if (flags != 0) return NULL;
-
-    kret = task_for_pid(mach_task_self(), pid, &port);
-    if (kret != KERN_SUCCESS) {
+    if (flags & ~(VAS_O_REPORT_ERROR | VAS_O_FORCE_SELF)) {
+        if (flags & VAS_O_REPORT_ERROR)
+            fputs("Unknown bit in flags parameter\n", stderr);
         return NULL;
     }
+
+
+    kret = task_for_pid(mach_task_self(), pid, &port);
+    if (kret != KERN_SUCCESS)
+        return NULL;
+
     vas = (struct vas_t*)malloc(sizeof *vas);
     vas->port = port;
     vas->pid = pid;
+    vas->flags = flags;
 
     return vas;
 }
+
 void vas_close(vas_t *vas) {
     if (vas == vas_self())
         return;
@@ -64,7 +77,7 @@ int vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
 int vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len) {
     kern_return_t kret;
     ssize_t nbytes;
-    
+
     if (len > INT_MAX)
         return -1;
 
