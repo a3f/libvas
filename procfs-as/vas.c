@@ -47,9 +47,18 @@ struct vas_t {
 
 vas_t *vas_self(void) {
     static vas_t self;
+    int ret;
+    char filename[sizeof "/proc//as" + 3*sizeof (pid_t)];
+
     if (self.pid == 0) {
+        ret = sprintf(filename, "/proc/%d/as", pid_self());
+        if (ret < 0)
+            return NULL;
+        self.memfd = open(filename, PROCFS_O_FLAGS);
+        if (self.memfd < 0)
+            return NULL;
+
         self.pid  = pid_self();
-        self.memfd = open("/proc/self/mem", PROCFS_O_FLAGS);
     }
 
     return &self;
@@ -59,7 +68,7 @@ vas_t *vas_self(void) {
 vas_t *vas_open(pid_t pid, int flags) {
     struct vas_t *vas;
     /* snprintf is C99 */
-    char filename[sizeof "/proc//mem" + 3*sizeof (pid_t)];
+    char filename[sizeof "/proc//as" + 3*sizeof (pid_t)];
     int fd;
     int ret;
 
@@ -69,7 +78,7 @@ vas_t *vas_open(pid_t pid, int flags) {
         return NULL;
     }
 
-    ret = sprintf(filename, "/proc/%d/mem", pid);
+    ret = sprintf(filename, "/proc/%d/as", pid);
     if (ret < 0) {
         fputs("interestingly, sprintf failed.", stderr);
         return NULL;
@@ -106,32 +115,9 @@ void vas_close(vas_t *vas) {
 int vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
     ssize_t nbytes = -1;
 
-    if (vas->pid != vas_self()->pid) {
-        if (ptrace(PTRACE_ATTACH, vas->pid, 0, 0) == -1) {
-            vas_report("ptrace(attach) failed");
-            return -1;
-        }
-
-        {
-            int status;
-            retry:
-            if (waitpid(vas->pid, &status, 0) != vas->pid) {
-                if (errno == EINTR) goto retry;
-                vas_report("waitpid(tracee) failed");
-                goto end;
-            }
-        }
-    }
-
     IF_NON_REENTRANT( pthread_mutex_lock(vas->lock); )
         nbytes = pread(vas->memfd, dst, len, src);
     IF_NON_REENTRANT( pthread_mutex_unlock(vas->lock); )
-
-end:
-    if (vas->pid != vas_self()->pid) {
-        if (ptrace(PTRACE_DETACH, vas->pid, 0, 0) == -1)
-            vas_report("ptrace(detach) failed");
-    }
 
     if (nbytes != -1)
         return nbytes;
@@ -143,33 +129,9 @@ end:
 int vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len) {
     ssize_t nbytes = -1;
 
-    if (vas->pid != vas_self()->pid) {
-        if (ptrace(PTRACE_ATTACH, vas->pid, 0, 0) == -1) {
-            vas_report("ptrace(attach) failed");
-            return -1;
-        }
-
-        {
-            int status;
-            retry:
-            if (waitpid(vas->pid, &status, 0) != vas->pid) {
-                if (errno == EINTR) goto retry;
-                vas_report("waitpid(tracee) failed");
-                goto end;
-            }
-        }
-    }
-
     IF_NON_REENTRANT( pthread_mutex_lock(vas->lock); )
         nbytes = pwrite(vas->memfd, src, len, dst);
     IF_NON_REENTRANT( pthread_mutex_unlock(vas->lock); )
-
-
-end:
-    if (vas->pid != vas_self()->pid) {
-        if (ptrace(PTRACE_DETACH, vas->pid, 0, 0) == -1)
-            vas_report("ptrace(detach) failed");
-    }
 
     if (nbytes != -1)
         return nbytes;

@@ -5,6 +5,7 @@
 #cmakedefine HAVE_PREAD 1
 #cmakedefine HAVE_PWRITE 1
 #cmakedefine HAVE_MACH_H 1
+#cmakedefine HAVE_O_SYNC 1
 #cmakedefine HAVE_PTRACE_ATTACH 1
 #cmakedefine HAVE_PT_ATTACHEXC 1
 #cmakedefine HAVE_PTRACE_PEEKDATA 1
@@ -37,6 +38,13 @@ ${SIZEOF_PID_T_CODE}
 #cmakedefine _LARGEFILE64_SOURCE
 #cmakedefine _LARGE_FILES
 #cmakedefine _FILE_OFFSET_BITS @_FILE_OFFSET_BITS@
+
+#ifdef HAVE_O_SYNC
+    #define PROCFS_O_FLAGS (O_SYNC | O_RDWR)
+#else
+    #define PROCFS_O_FLAGS O_RDWR
+#endif
+
 
 
 #endif

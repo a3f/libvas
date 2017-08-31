@@ -39,15 +39,15 @@ Afterwards you can use `pkg-config --libs libvas` and `pkg-config --cflags libva
 
 Multiple backends are available, each corresponding to a directory in the source hierarchy:
 
-    • win32      - Windows API
-    • mach       - Mach Virtual Memory API - macOS and GNU Hurd
+    • win32      - Windows API's {Read,Write}ProcessMemory
+    • mach       - Mach Virtual Memory API (vm_copy) - macOS and GNU Hurd
     • process_vm - process_vm_{readv, writev} on Linux 3.2+
     • procfs-mem - /proc/$pid/mem on Linux and some BSDs
     • procfs-as  - /proc/$pid/as on SunOS/Solaris
     • ptrace     - ptrace(2), available on many Unices
     • memcpy     - Trivial implementation that doesn't supports foreign address spaces
 
-The appropriate backend is selected by CMake at configuration time. You can override the selection by specifying e.g. '-DBACKEND=ptrace' when invoking `cmake`.
+The appropriate backend is selected by CMake at configuration time. You can override the selection by specifying e.g. `cmake -DBACKEND=ptrace`.
 
 ## Wrappers
 

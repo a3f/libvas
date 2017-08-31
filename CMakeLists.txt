@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.0)
 project(vas C)
-set(PROJECT_VERSION 0.7)
+set(PROJECT_VERSION 0.71)
 
 INCLUDE (CheckIncludeFiles)
 INCLUDE (CheckTypeSize)
@@ -69,15 +69,16 @@ CHECK_INCLUDE_FILES(sys/mman.h VAS_HAVE_MMAN_H)
 IF (VAS_HAVE_MMAN_H)
 INCLUDE (CheckSymbolExists)
 CHECK_SYMBOL_EXISTS(MAP_ANONYMOUS sys/mman.h HAVE_MAP_ANONYMOUS)
+check_symbol_exists(O_SYNC "fcntl.h" HAVE_O_SYNC)
 IF (NOT HAVE_MAP_ANONYMOUS)
 CHECK_SYMBOL_EXISTS(MAP_ANON sys/mman.h HAVE_MAP_ANON)
 ENDIF()
 ENDIF(VAS_HAVE_MMAN_H)
 
-
-
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+IF(NOT HAVE_WINDOWS_H)
 set(CMAKE_MACOSX_RPATH ON)
+ENDIF()
 include_directories(include)
 include_directories(.)
 

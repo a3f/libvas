@@ -60,17 +60,22 @@ int vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
     kern_return_t kret;
     ssize_t nbytes;
 
-    if (len > INT_MAX)
+    if (len > INT_MAX) {
+        if (vas->flags & VAS_O_REPORT_ERROR)
+            fprintf(stderr, "length %lu exceeds maximum %d\n", (unsigned long)len, INT_MAX);
         return -1;
+    }
 
     kret = mach_vm_read_overwrite(vas->port,
-        (mach_vm_address_t)src, len,
-        (mach_vm_address_t)dst, (mach_vm_size_t*)&nbytes
+        (mach_vm_address_t)(unsigned long)src, len,
+        (mach_vm_address_t)(unsigned long)dst, (mach_vm_size_t*)&nbytes
     );
 
     if (kret == KERN_SUCCESS)
         return nbytes;
 
+    if (vas->flags & VAS_O_REPORT_ERROR)
+        fprintf(stderr, "mach_vm_read_overwrite failed");
     return -1;
 }
 
@@ -78,19 +83,24 @@ int vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len) {
     kern_return_t kret;
     ssize_t nbytes;
 
-    if (len > INT_MAX)
+    if (len > INT_MAX) {
+        if (vas->flags & VAS_O_REPORT_ERROR)
+            fprintf(stderr, "length %lu exceeds maximum %d\n", (unsigned long)len, INT_MAX);
         return -1;
+    }
 
     nbytes = len;
 
     kret = mach_vm_write(vas->port,
-        (mach_vm_address_t)dst,
-        (mach_vm_address_t)src, (mach_vm_size_t)nbytes
+        (mach_vm_address_t)(unsigned long)dst,
+        (mach_vm_address_t)(unsigned long)src, (mach_vm_size_t)nbytes
     );
 
     if (kret == KERN_SUCCESS)
         return nbytes;
 
+    if (vas->flags & VAS_O_REPORT_ERROR)
+        fprintf(stderr, "mach_vm_write failed");
     return -1;
 }
 
@@ -129,6 +139,8 @@ vas_poll_t *vas_poll_new(vas_t *vas, vas_addr_t addr, size_t size, int flags) {
      );
 
     if (err != KERN_SUCCESS) {
+        if (vas->flags & VAS_O_REPORT_ERROR)
+            fprintf(stderr, "vm_remap failed");
         return NULL;
     }
 
@@ -161,5 +173,5 @@ void vas_poll_del(vas_poll_t *p) {
 int vas_pagesize(void) {
     vm_size_t size;
     kern_return_t ret = host_page_size(mach_host_self(), &size);
-    return ret == KERN_SUCCESS ? size : -1;
+    return ret == KERN_SUCCESS ? (int)size : -1;
 }
