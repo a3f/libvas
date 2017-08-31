@@ -17,6 +17,9 @@ CHECK_C_SOURCE_COMPILES("#include <sys/types.h>
       HAVE_SYS_PTRACE_H)
 CHECK_INCLUDE_FILES(libpid.h VAS_HAVE_LIBPID_H)
 CHECK_INCLUDE_FILES(mach/mach.h HAVE_MACH_H)
+SET(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+CHECK_SYMBOL_EXISTS(process_vm_readv sys/uio.h HAVE_PROCESS_VM_READV)
+SET(CMAKE_REQUIRED_DEFINITIONS)
 CHECK_INCLUDE_FILES(windows.h HAVE_WINDOWS_H)
 IF(HAVE_SYS_PTRACE_H)
     SET(CMAKE_EXTRA_INCLUDE_FILES sys/ptrace.h)
@@ -55,6 +58,7 @@ CHECK_TYPE_SIZE(off_t SIZEOF_OFF_T)
 CHECK_TYPE_SIZE(pid_t SIZEOF_PID_T)
 CHECK_SYMBOL_EXISTS(fork unistd.h HAVE_FORK)
 CHECK_SYMBOL_EXISTS(CreateProcessW windows.h HAVE_CREATEPROCESS)
+
 IF (HAVE_SIZEOF_OFF_T)
 SET(VAS_HAVE_OFF_T 1)
 ENDIF()
@@ -106,6 +110,8 @@ IF("${BACKEND}" STREQUAL "")
         SET(BACKEND win32)
     ELSEIF(HAVE_MACH_H) # macOS and GNU Hurd
         SET(BACKEND mach)
+    ELSEIF(HAVE_PROCESS_VM_READV) # Linux 3.2 & glibc 2.15
+        SET(BACKEND process_vm)
     ELSEIF(PROCFS_MEM_RETVAL EQUAL 0) # Linux and more
         SET(BACKEND procfs-mem)
     ELSEIF(PROCFS_AS_RETVAL EQUAL 0) # SunOS/Solaris
@@ -127,6 +133,11 @@ ELSEIF("${BACKEND}" STREQUAL mach)
     MESSAGE("lib${PROJECT_NAME} will use Mach VM API")
     SET(VAS_USES_MACH 1)
     file(GLOB SOURCES ${SOURCES} mach/*.c posix/fmap.c dup.c)
+
+ELSEIF("${BACKEND}" STREQUAL process_vm)
+    file(GLOB SOURCES ${SOURCES} process_vm/*.c posix/*.c poll.c dup.c)
+    SET(VAS_USES_PROCESS_VM 1)
+    MESSAGE("lib${PROJECT_NAME} will use process_vm_{readv,writev}")
 
 ELSEIF("${BACKEND}" STREQUAL procfs-mem)
     MESSAGE("lib${PROJECT_NAME} will use /procfs/$pid/mem")
@@ -175,7 +186,7 @@ ELSEIF("${BACKEND}" STREQUAL memcpy)
 
 ELSE()
     MESSAGE(FATAL_ERROR "${BACKEND} is not a supported backend. Valid values are
-      win32, mach, procfs-mem, procfs-as, ptrace, memcpy
+      win32, mach, procfs-mem, process_vm, procfs-as, ptrace, memcpy
       or just leave it empty")
 
 ENDIF()

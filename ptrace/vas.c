@@ -72,7 +72,6 @@ vas_t *vas_open(pid_t pid, int flags) {
 void vas_close(vas_t *vas) {
     if (vas == vas_self())
         return;
-    /* ptrace(PTRACE_DETACH, vas->pid, NULL, NULL); */
     free(vas);
 }
 

@@ -10,7 +10,6 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <limits.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -41,10 +40,9 @@ static ssize_t my_pwrite(int fd, const void *buf, size_t count, off_t offset) {
 
 
 struct vas_t {
-    int flags;
     pid_t pid;
     int memfd;
-    int self;
+    int flags;
     IF_NON_REENTRANT( pthread_mutex_t lock; )
 };
 
@@ -86,8 +84,6 @@ vas_t *vas_open(pid_t pid, int flags) {
         }
         return NULL;
     }
-    /* ptrace(PTRACE_ATTACH, pid, NULL, NULL); */
-
     vas = (struct vas_t*)malloc(sizeof *vas);
     if (vas == NULL) {
         return NULL;
@@ -103,7 +99,6 @@ vas_t *vas_open(pid_t pid, int flags) {
 void vas_close(vas_t *vas) {
     if (vas == vas_self())
         return;
-    /* ptrace(PTRACE_DETACH, vas->pid, NULL, NULL); */
     close(vas->memfd);
     IF_NON_REENTRANT( pthread_mutex_destroy(vas->lock); )
     free(vas);

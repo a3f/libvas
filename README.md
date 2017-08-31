@@ -41,6 +41,7 @@ Multiple backends are available, each corresponding to a directory in the source
 
     • win32      - Windows API
     • mach       - Mach Virtual Memory API - macOS and GNU Hurd
+    • process_vm - process_vm_{readv, writev} on Linux 3.2+
     • procfs-mem - /proc/$pid/mem on Linux and some BSDs
     • procfs-as  - /proc/$pid/as on SunOS/Solaris
     • ptrace     - ptrace(2), available on many Unices
