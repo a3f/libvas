@@ -19,19 +19,7 @@
 #error "Peculiar ptrace(2) detected: Return type not of same size as any of [char,short,int,long]"
 #endif
 
-#ifndef HAVE_PTRACE_PEEKDATA
-#define PTRACE_PEEKDATA PT_READ_D
-#define PTRACE_POKEDATA PT_WRITE_D
-#endif
-
-#ifndef HAVE_PTRACE_ATTACH
-#ifdef HAVE_PT_ATTACHEXC
-#define PTRACE_ATTACH  PT_ATTACHEXC
-#else
-#define PTRACE_ATTACH PT_ATTACH
-#endif
-#define PTRACE_DETACH PT_DETACH
-#endif
+/* TODO PT_IO support for BSD */
 
 struct vas_t {
     int flags;
@@ -76,6 +64,7 @@ void vas_close(vas_t *vas) {
 }
 
 #define my_mempcpy(dst,src,len) ((void*)((char*)memcpy((dst), (src), (len)) + len))
+#undef MIN
 #define MIN(a,b) ( (a) < (b) ? (a) : (b) )
 
 int vas_read(vas_t *vas, const vas_addr_t _src, void* dst, size_t len) {

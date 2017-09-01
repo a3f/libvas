@@ -42,6 +42,7 @@ int main(int argc, char *argv[]) {
                 heal(SPELL);
                 Sleep(MIN_HEALTH);
                 vas_read(proc, CHARACTER_HEALTH, &health, sizeof(uint32_t));
+                printf("Character health is %" PRIu32 "\n", health);
             }
         }
 

@@ -1,7 +1,13 @@
-#define _POSIX_SOURCE
-#include <unistd.h>
-#include <signal.h>
+#include "config.h"
+#ifdef HAVE_GLIBC /* for kill(2) */
+    #define _POSIX_SOURCE
+    #include <signal.h>
+    #undef _POSIX_SOURCE
+#else
+    #include <signal.h>
+#endif
 
+#include <unistd.h>
 #include <sys/types.h>
 #include <errno.h>
 #include <sys/ptrace.h>

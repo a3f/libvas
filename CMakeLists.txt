@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.0)
 project(vas C)
-set(PROJECT_VERSION 0.71)
+set(PROJECT_VERSION 0.72)
 
 INCLUDE (CheckIncludeFiles)
 INCLUDE (CheckTypeSize)
@@ -13,35 +13,36 @@ set (CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 #CHECK_INCLUDE_FILES(ptrace.h HAVE_SYS_PTRACE_H)
 CHECK_C_SOURCE_COMPILES("#include <sys/types.h>
        #include <sys/ptrace.h>
-      int main() { ptrace(0, 0, 0, 0); return 0; }"
+      int main(void) { ptrace(0, 0, 0, 0); return 0; }"
       HAVE_SYS_PTRACE_H)
 CHECK_INCLUDE_FILES(libpid.h VAS_HAVE_LIBPID_H)
 CHECK_INCLUDE_FILES(mach/mach.h HAVE_MACH_H)
 SET(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
 CHECK_SYMBOL_EXISTS(process_vm_readv sys/uio.h HAVE_PROCESS_VM_READV)
+CHECK_SYMBOL_EXISTS(__GLIBC__ features.h HAVE_GLIBC)
 SET(CMAKE_REQUIRED_DEFINITIONS)
 CHECK_INCLUDE_FILES(windows.h HAVE_WINDOWS_H)
 IF(HAVE_SYS_PTRACE_H)
     SET(CMAKE_EXTRA_INCLUDE_FILES sys/ptrace.h)
     CHECK_C_SOURCE_COMPILES("#include <sys/types.h>
         #include <sys/ptrace.h>
-        int main() { ptrace(PTRACE_ATTACH, 0, 0, 0); return 0; }"
-        HAVE_PT_ATTACH)
+        int main(void) { ptrace(PTRACE_ATTACH, 0, 0, 0); return 0; }"
+        HAVE_PTRACE_ATTACH)
     CHECK_C_SOURCE_COMPILES("#include <sys/types.h>
         #include <sys/ptrace.h>
-        int main() { ptrace(PT_ATTACHEXC, 0, 0, 0); return 0; }"
+        int main(void) { ptrace(PT_ATTACHEXC, 0, 0, 0); return 0; }"
         HAVE_PT_ATTACHEXC)
     CHECK_C_SOURCE_COMPILES("#include <sys/types.h>
         #include <sys/ptrace.h>
-        int main() { ptrace(PTRACE_PEEKDATA, 0, 0, 0); return 0; }"
+        int main(void) { ptrace(PTRACE_PEEKDATA, 0, 0, 0); return 0; }"
         HAVE_PTRACE_PEEKDATA)
     CHECK_C_SOURCE_COMPILES("#include <sys/types.h>
         #include <sys/ptrace.h>
-        int main() { ptrace(PT_READ_D, 0, 0, 0); return 0; }"
+        int main(void) { ptrace(PT_READ_D, 0, 0, 0); return 0; }"
         HAVE_PT_READ_D)
     CHECK_C_SOURCE_COMPILES("#include <sys/types.h>
         #include <sys/ptrace.h>
-        int main() { ptrace(PT_IO, 0, 0, 0); return 0; }"
+        int main(void) { ptrace(PT_IO, 0, 0, 0); return 0; }"
         HAVE_PT_IO)
     CHECK_TYPE_SIZE("ptrace(0, 0, 0, 0)" SIZEOF_PTRACE_RET)
     MESSAGE(STATUS "Return type of ptrace is ${SIZEOF_PTRACE_RET} bytes wide")
@@ -90,21 +91,27 @@ STRING(REGEX MATCH "BSD" BSD ${CMAKE_SYSTEM_NAME})
 STRING(TOLOWER "${BACKEND}" BACKEND)
 
 # IF(EXISTS finds /proc/self/mem but not /proc/1/mem for whatever reason
-MESSAGE(STATUS "Checking for /proc/1/mem")
-EXECUTE_PROCESS(COMMAND [ -f /proc/1/mem ] RESULT_VARIABLE PROCFS_MEM_RETVAL)
-IF(PROCFS_MEM_RETVAL EQUAL 0)
-MESSAGE(STATUS "Checking for /proc/1/mem - found")
-ELSE()
-MESSAGE(STATUS "Checking for /proc/1/mem - not found")
-ENDIF()
+# FreeBSD has no /proc/1/mem, but has /proc/anyother_pid/mem
 
-MESSAGE(STATUS "Checking for /proc/1/as")
-EXECUTE_PROCESS(COMMAND [ -f /proc/1/as ] RESULT_VARIABLE PROCFS_AS_RETVAL)
-IF(PROCFS_AS_RETVAL EQUAL 0)
-MESSAGE(STATUS "Checking for /proc/1/as - found")
-ELSE()
-MESSAGE(STATUS "Checking for /proc/1/as - not found")
-ENDIF()
+MESSAGE(STATUS "Checking for /proc/$$/mem")
+CHECK_C_SOURCE_RUNS("#include <sys/types.h>
+    #include <unistd.h>
+    #include <stdio.h>
+    char filename[24];
+    int main(void) {
+        if (sprintf(filename, \"/proc/%d/mem\", getpid()) < 0) return 1;
+        return access( filename, F_OK );}"
+        HAVE_PROCFS_PID_MEM)
+
+MESSAGE(STATUS "Checking for /proc/$$/as")
+CHECK_C_SOURCE_RUNS("#include <sys/types.h>
+    #include <unistd.h>
+    #include <stdio.h>
+    char filename[24];
+    int main(void) {
+        if (sprintf(filename, \"/proc/%d/as\", getpid()) < 0) return 1;
+        return access( filename, F_OK );}"
+        HAVE_PROCFS_PID_AS)
 
 IF("${BACKEND}" STREQUAL "")
     IF(WIN32)
@@ -113,9 +120,9 @@ IF("${BACKEND}" STREQUAL "")
         SET(BACKEND mach)
     ELSEIF(HAVE_PROCESS_VM_READV) # Linux 3.2 & glibc 2.15
         SET(BACKEND process_vm)
-    ELSEIF(PROCFS_MEM_RETVAL EQUAL 0) # Linux and more
+    ELSEIF(HAVE_PROCFS_PID_MEM) # Linux and more
         SET(BACKEND procfs-mem)
-    ELSEIF(PROCFS_AS_RETVAL EQUAL 0) # SunOS/Solaris
+    ELSEIF(HAVE_PROCFS_PID_AS) # SunOS/Solaris
         SET(BACKEND procfs-as)
     ELSEIF(HAVE_SYS_PTRACE_H AND NOT APPLE) # BSD without procfs mounted, what else?
         SET(BACKEND ptrace)                 # macOS always reports EBUSY instead of proper ESYS
@@ -166,16 +173,14 @@ ELSEIF(${BACKEND} STREQUAL procfs-as)
     file(GLOB SOURCES ${SOURCES} procfs-as/*.c poll.c dup.c)
     #add_definitions(-DHAS_WEAK_ALIAS)
 
-ELSEIF(BSD AND "${BACKEND}" STREQUAL ptrace)
-    MESSAGE("procfs not mounted. lib${PROJECT_NAME} will use ptrace(2) API")
-    SET(VAS_USES_PTRACE 1)
-    file(GLOB SOURCES ${SOURCES} ptrace/*.c poll.c dup.c)
-
 ELSEIF("${BACKEND}" STREQUAL ptrace)
+    IF(BSD)
+        MESSAGE(STATUS "procfs not mounted on this BSD. You could try to mount -t procfs proc /proc")
+    ENDIF()
     MESSAGE("lib${PROJECT_NAME} will use ptrace(2) API")
     SET(VAS_USES_PTRACE 1)
-    file(GLOB SOURCES ${SOURCES} ptrace/*.c posix/*.c poll.c dup.c)
     SET(CANT_SELFTEST 1)
+    file(GLOB SOURCES ${SOURCES} ptrace/*.c posix/*.c poll.c dup.c)
 
 ELSEIF("${BACKEND}" STREQUAL memcpy)
     MESSAGE("lib${PROJECT_NAME} will use memcpy")

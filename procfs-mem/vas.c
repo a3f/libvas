@@ -1,10 +1,14 @@
-#define _XOPEN_SOURCE 500 /* for pwrite/pread(2) */
 #include "config.h"
+#ifndef HAVE_GLIBC
+    #include <sys/types.h>
+#endif
+#define _XOPEN_SOURCE 500 /* for pwrite/pread(2) */
+#include <unistd.h>
+#undef _XOPEN_SOURCE
+#include <sys/types.h>
 #include "vas.h"
 #include "vas-internal.h"
 
-#include <unistd.h>
-#include <sys/types.h>
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 #include <fcntl.h>
@@ -45,11 +49,21 @@ struct vas_t {
     IF_NON_REENTRANT( pthread_mutex_t lock; )
 };
 
+/* on Linux there's a /proc/self symlink. On FreeBSD it's /proc/curproc.
+ * On SunOS, there's none. So we just skip symlink use
+ */
 vas_t *vas_self(void) {
     static vas_t self;
+    char filename[24];
+
     if (self.pid == 0) {
+        if (sprintf(filename, "/proc/%d/mem", pid_self()) < 0)
+            return NULL;
+        self.memfd = open(filename, PROCFS_O_FLAGS);
+        if (self.memfd < 0)
+            return NULL;
+
         self.pid  = pid_self();
-        self.memfd = open("/proc/self/mem", PROCFS_O_FLAGS);
     }
 
     return &self;
@@ -59,7 +73,7 @@ vas_t *vas_self(void) {
 vas_t *vas_open(pid_t pid, int flags) {
     struct vas_t *vas;
     /* snprintf is C99 */
-    char filename[sizeof "/proc//mem" + 3*sizeof (pid_t)];
+    char filename[24];
     int fd;
     int ret;
 

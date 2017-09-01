@@ -47,12 +47,10 @@ struct vas_t {
 
 vas_t *vas_self(void) {
     static vas_t self;
-    int ret;
-    char filename[sizeof "/proc//as" + 3*sizeof (pid_t)];
+    char filename[24];
 
     if (self.pid == 0) {
-        ret = sprintf(filename, "/proc/%d/as", pid_self());
-        if (ret < 0)
+        if (sprintf(filename, "/proc/%d/as", pid_self()) < 0)
             return NULL;
         self.memfd = open(filename, PROCFS_O_FLAGS);
         if (self.memfd < 0)
@@ -68,7 +66,7 @@ vas_t *vas_self(void) {
 vas_t *vas_open(pid_t pid, int flags) {
     struct vas_t *vas;
     /* snprintf is C99 */
-    char filename[sizeof "/proc//as" + 3*sizeof (pid_t)];
+    char filename[24];
     int fd;
     int ret;
 
