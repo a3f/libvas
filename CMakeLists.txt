@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.0)
 project(vas C)
-set(PROJECT_VERSION 0.72)
+set(PROJECT_VERSION 0.73)
 
 INCLUDE (CheckIncludeFiles)
 INCLUDE (CheckTypeSize)
@@ -60,10 +60,10 @@ CHECK_TYPE_SIZE(pid_t SIZEOF_PID_T)
 CHECK_SYMBOL_EXISTS(fork unistd.h HAVE_FORK)
 CHECK_SYMBOL_EXISTS(CreateProcessW windows.h HAVE_CREATEPROCESS)
 
-IF (HAVE_SIZEOF_OFF_T)
+IF (SIZEOF_OFF_T)
 SET(VAS_HAVE_OFF_T 1)
 ENDIF()
-IF (HAVE_SIZEOF_PID_T)
+IF (SIZEOF_PID_T)
 SET(VAS_HAVE_PID_T 1)
 ENDIF()
 CHECK_INCLUDE_FILES(sys/mman.h VAS_HAVE_MMAN_H)
@@ -97,9 +97,9 @@ MESSAGE(STATUS "Checking for /proc/$$/mem")
 CHECK_C_SOURCE_RUNS("#include <sys/types.h>
     #include <unistd.h>
     #include <stdio.h>
-    char filename[24];
+    char filename[32];
     int main(void) {
-        if (sprintf(filename, \"/proc/%d/mem\", getpid()) < 0) return 1;
+        if (sprintf(filename, \"/proc/%ld/mem\", (long)getpid()) < 0) return 1;
         return access( filename, F_OK );}"
         HAVE_PROCFS_PID_MEM)
 
@@ -107,9 +107,9 @@ MESSAGE(STATUS "Checking for /proc/$$/as")
 CHECK_C_SOURCE_RUNS("#include <sys/types.h>
     #include <unistd.h>
     #include <stdio.h>
-    char filename[24];
+    char filename[32];
     int main(void) {
-        if (sprintf(filename, \"/proc/%d/as\", getpid()) < 0) return 1;
+        if (sprintf(filename, \"/proc/%ld/as\", (long)getpid()) < 0) return 1;
         return access( filename, F_OK );}"
         HAVE_PROCFS_PID_AS)
 
@@ -170,7 +170,7 @@ ELSEIF(${BACKEND} STREQUAL procfs-as)
             MESSAGE(WARNING "using own implementation for pread/pwrite(2)")
         ENDIF()
     configure_file(config.h.in config.h)
-    file(GLOB SOURCES ${SOURCES} procfs-as/*.c poll.c dup.c)
+    file(GLOB SOURCES ${SOURCES} procfs-as/*.c posix/*.c poll.c dup.c)
     #add_definitions(-DHAS_WEAK_ALIAS)
 
 ELSEIF("${BACKEND}" STREQUAL ptrace)

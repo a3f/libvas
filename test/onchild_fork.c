@@ -1,16 +1,10 @@
 #include "config.h"
-#ifdef HAVE_GLIBC /* for kill(2) */
-    #define _POSIX_SOURCE
-    #include <signal.h>
-    #undef _POSIX_SOURCE
-#else
-    #include <signal.h>
-#endif
 
+#define _POSIX_SOURCE
+#include <signal.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <errno.h>
-#include <sys/ptrace.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <vas.h>
@@ -35,25 +29,12 @@ int main(void) {
         case -1:
             return 0; /* Not the test's fault, you OOM */
         case 0:
-            printf("my pid=%d\n", getpid());
-#if 0
-            if (ptrace(PT_TRACE_ME, 0, 0, 0) == -1)
-                abort();
-#endif
             pause();
             break;
         default: {
-#if 0
-            int status;
-#endif
             val = 1337;
 
             sleep(1);
-
-#if 0
-            while (waitpid(pid, &status, 0) == pid && errno == EINTR)
-                ;
-#endif
 
             signal(SIGABRT, catch_abort);
             proc = vas_open(pid, VAS_O_REPORT_ERROR);

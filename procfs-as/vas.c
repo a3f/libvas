@@ -4,8 +4,6 @@
 #include "vas-internal.h"
 
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/ptrace.h>
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -47,10 +45,10 @@ struct vas_t {
 
 vas_t *vas_self(void) {
     static vas_t self;
-    char filename[24];
+    char filename[32];
 
     if (self.pid == 0) {
-        if (sprintf(filename, "/proc/%d/as", pid_self()) < 0)
+        if (sprintf(filename, "/proc/%ld/as", (long)pid_self()) < 0)
             return NULL;
         self.memfd = open(filename, PROCFS_O_FLAGS);
         if (self.memfd < 0)
@@ -66,7 +64,7 @@ vas_t *vas_self(void) {
 vas_t *vas_open(pid_t pid, int flags) {
     struct vas_t *vas;
     /* snprintf is C99 */
-    char filename[24];
+    char filename[32];
     int fd;
     int ret;
 
@@ -76,7 +74,7 @@ vas_t *vas_open(pid_t pid, int flags) {
         return NULL;
     }
 
-    ret = sprintf(filename, "/proc/%d/as", pid);
+    ret = sprintf(filename, "/proc/%ld/as", (long)pid);
     if (ret < 0) {
         fputs("interestingly, sprintf failed.", stderr);
         return NULL;

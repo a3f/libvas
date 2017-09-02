@@ -36,7 +36,7 @@ Afterwards you can use `pkg-config --libs libvas` and `pkg-config --cflags libva
     make install
     ctest
 
-Some manual tests/examples are available in `test/manual/`. The appliable tests in `test/` are run automatically on `ctest`.
+Some manual tests/examples are available in `test/manual/`. Applicable tests in `test/` are run automatically on `ctest`.
 
 ## Platforms
 
