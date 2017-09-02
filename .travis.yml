@@ -9,9 +9,9 @@ matrix:
         - os: linux
           env: CC=clang CFLAGS=-m64 LDFLAGS=-m64
         - os: linux
-          env: CC=gcc CFLAGS=-m32 LDFLAGS=-m32 BACKEND=process_vm
+          env: CC=gcc CFLAGS=-m32 LDFLAGS=-m32 BACKEND=ptrace
         - os: linux
-          env: CC=clang CFLAGS=-m64 LDFLAGS=-m64 BACKEND=ptrace
+          env: CC=clang CFLAGS=-m64 LDFLAGS=-m64 BACKEND=procfs
         - os: osx
           env: CC=clang CFLAGS=-m32 LDFLAGS=-m32
         - os: osx

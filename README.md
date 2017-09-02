@@ -8,10 +8,11 @@ Multi-platform C lib for peeking/poking/handling virtual memory
 
 [![Build Status](https://travis-ci.org/a3f/libvas.svg?branch=master)](https://travis-ci.org/a3f/libvas)
 [![Build status](https://ci.appveyor.com/api/projects/status/q68mvjmksaide04c/branch/master?svg=true)](https://ci.appveyor.com/project/a3f/libvas/branch/master)
+[![CPAN testers](https://img.shields.io/badge/CPAN%20Testers-Alien::libvas-blue.svg)](http://www.cpantesters.org/distro/A/Alien-libvas.html)
 
 ## Features
 
-- Multi-Platform: Runs on Windows, Linux, BSD, MacOS, GNU Hurd, SunOS and a couple other systems
+- Multi-Platform: Runs on Windows, Linux, BSD, MacOS, SunOS and a probably a couple more systems
 - Read/Write/Remap other processes' memory
 - Allocate those nifty virtual-memory-mirrored ring buffers
 - Duplicate memory with Copy-on-Write semantics
@@ -45,8 +46,7 @@ Multiple backends are available, each corresponding to a directory in the source
     • win32      - Windows API's {Read,Write}ProcessMemory
     • mach       - Mach Virtual Memory API (vm_copy) - macOS and GNU Hurd
     • process_vm - process_vm_{readv, writev} on Linux 3.2+
-    • procfs-mem - /proc/$pid/mem on Linux and some BSDs
-    • procfs-as  - /proc/$pid/as on SunOS/Solaris
+    • procfs     - /proc/$pid/mem on Linux and some BSDs, /proc/$pid/as on SunOS
     • ptrace     - ptrace(2), available on many Unices
     • memcpy     - Trivial implementation that doesn't supports foreign address spaces
 
@@ -57,6 +57,10 @@ libvas has no external non-OS dependencies and is written in C++-compatible C89 
 ## Wrappers
 
 See [Proc::Memory] for a Perl interface to the library.
+
+## TODO
+
+- [ ] Add supportPT_IO 
 
 ## License
 

@@ -12,6 +12,11 @@
 #cmakedefine HAVE_PT_READ_D 1
 #cmakedefine HAVE_PT_IO 1
 #cmakedefine HAVE_GLIBC 1
+#cmakedefine HAVE_GETPID 1
+#cmakedefine HAVE__GETPID 1
+#cmakedefine HAVE_LIBPID_H 1
+#cmakedefine HAVE_SHM_OPEN 1
+#cmakedefine HAVE_SHM_MKSTEMP 1
 
 ${SIZEOF_PTRACE_RET_CODE}
 ${SIZEOF_SHORT_CODE}
@@ -46,6 +51,8 @@ ${SIZEOF_PID_T_CODE}
     #define PROCFS_O_FLAGS O_RDWR
 #endif
 
+#cmakedefine PROCFS_MEM_OR_AS "@PROCFS_MEM_OR_AS@"
+
 #ifndef HAVE_PTRACE_PEEKDATA
     #define PTRACE_PEEKDATA PT_READ_D
     #define PTRACE_POKEDATA PT_WRITE_D
@@ -59,7 +66,5 @@ ${SIZEOF_PID_T_CODE}
     #endif
     #define PTRACE_DETACH PT_DETACH
 #endif
-
-
 
 #endif

@@ -1,9 +1,9 @@
+#include "config.h"
 #define _XOPEN_SOURCE
 #define _XOPEN_SOURCE_EXTENDED
 #include "vas.h"
 #include "vas-internal.h"
 
-#include "config.h"
 
 #include <unistd.h>
 #include <sys/types.h>

@@ -26,8 +26,10 @@ vas_ringbuf_t *vas_ringbuf_alloc(vas_t *vas, size_t pagecount, int flags) {
     } len;
     
 
+#if 0 /* TODO add error reporting */
     if (flags)
         return NULL;
+#endif
 
     if (vas != vas_self())
         return NULL;

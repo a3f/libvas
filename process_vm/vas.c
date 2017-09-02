@@ -1,5 +1,5 @@
-#define _GNU_SOURCE
 #include "config.h"
+#define _GNU_SOURCE
 #include "vas.h"
 #include "vas-internal.h"
 

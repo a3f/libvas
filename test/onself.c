@@ -1,3 +1,4 @@
+#include "config.h"
 #include <stdio.h>
 #include <vas.h>
 #include <vas-internal.h>
@@ -9,18 +10,21 @@ int main(void) {
     long copy;
     int nbytes;
     /* vas_t *proc = vas_open(getpid(), 0); */
-    vas_t *procs[3], **proc;
+    vas_t *procs[3], **proc = procs;
     vas_poll_t *poller;
     vas_addr_t addr = (vas_addr_t)&val;
 
-    procs[0] = vas_open(pid_self(), VAS_O_REPORT_ERROR);
-    ISNT(procs[0], NULL, "vas_open() on self");
-    procs[1] = vas_self();
-    ISNT(procs[1], NULL, "vas_self() possible");
-    procs[2] = NULL;
+#ifdef pid_self
+    *procs = vas_open(pid_self(), VAS_O_REPORT_ERROR);
+    ISNT(*proc, NULL, "vas_open() on self");
+    proc++;
+#endif
+    *proc = vas_self();
+    ISNT(*proc, NULL, "vas_self() possible");
+    proc++;
+    *proc = NULL;
 
     for (proc = procs; *proc; proc++) {
-        if (proc == &procs[0]) puts("vas_open():");
         if (proc == &procs[1]) puts("vas_self():");
 
         val = 0;

@@ -1,7 +1,7 @@
 #include "config.h"
-
 #define _POSIX_SOURCE
 #include <signal.h>
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <errno.h>

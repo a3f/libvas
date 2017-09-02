@@ -7,8 +7,7 @@
 #cmakedefine VAS_USES_MEMCPY     1
 #cmakedefine VAS_USES_WINAPI     2
 #cmakedefine VAS_USES_MACH       4
-#cmakedefine VAS_USES_PROCFS_MEM 8
-#cmakedefine VAS_USES_PROCFS_AS  16
+#cmakedefine VAS_USES_PROCFS     8
 #cmakedefine VAS_USES_PTRACE     32
 
 #include "vas-types.h"
