@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.0)
 project(vas C)
-set(PROJECT_VERSION 0.73)
+set(PROJECT_VERSION 0.731)
 
 INCLUDE (CheckIncludeFiles)
 INCLUDE (CheckTypeSize)
