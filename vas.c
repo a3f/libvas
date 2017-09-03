@@ -1,68 +1,50 @@
+/* Trivial fallback implementation
+ * Check subdirectories for the real ones
+ */
+
 #include "vas.h"
 #include "vas-internal.h"
 
 #include <stdlib.h>
-#include <string.h>
-
-
 
 struct vas_t {
-    int flags;
     pid_t pid;
 };
 
 vas_t *vas_self(void) {
     static struct vas_t vas;
-    if (!vas.pid) {
+    if (!vas.pid)
         vas.pid = pid_self();
-    }
+
     return &vas; 
 }
 
 vas_t *vas_open(pid_t pid, int flags) {
-    if (flags != 0) return NULL;
-
+    (void)flags;
     if (pid == pid_self())
         return vas_self();
-#if 0
-    vas = (struct vas_t*)malloc(sizeof *vas);
-    vas->pid = pid;
 
-    return vas;
-#endif
     return NULL;
 }
 
 void vas_close(vas_t *vas) {
-    if (vas == vas_self())
-        return;
-    free(vas);
+    (void)vas;
 }
 
 int vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
-    (void)vas;
+    if (vas != vas_self())
+        return -1;
+
     memcpy(dst, (const void*)src, len);
 
     return len;
 }
 
 int vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len) {
-    (void)vas;
+    if (vas != vas_self())
+        return -1;
+
     memcpy((void*)dst, src, len);
 
     return len;
-}
-
-
-void *vas_dup(vas_t *vas, const vas_addr_t src, size_t len) {
-    void *buf = malloc(len);
-    if (!buf)
-        return NULL;
-
-    if ((size_t)vas_read(vas, src, buf, len) != len) {
-        free(buf);
-        return NULL;
-    }
-
-    return buf;
 }

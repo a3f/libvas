@@ -241,7 +241,6 @@ ELSEIF("${BACKEND}" STREQUAL memcpy)
     MESSAGE(WARNING "It looks like we don't support this system yet,")
     MESSAGE(WARNING "Falling back to trivial (own address space only) implementation.")
     file(GLOB SOURCES ${SOURCES} *.c)
-    SET(CAN_ONLY_SELFTEST 1)
 
 ELSE()
     MESSAGE(FATAL_ERROR "${BACKEND} is not a supported backend. Valid values are
@@ -276,6 +275,12 @@ ENDIF(HAVE_FORK)
 
 enable_testing()
 
+IF(VAS_USES_MEMCPY)
+    LIST(REMOVE_ITEM AUTO_TESTS ringbuf)
+    LIST(REMOVE_ITEM AUTO_TESTS onchild_fork)
+ENDIF()
+
+
 foreach(T ${AUTO_TESTS})
     file(GLOB ${T}_src test/${T}.c)
     add_executable(${T} ${${T}_src})
@@ -285,10 +290,6 @@ endforeach(T)
 
 IF(CANT_SELFTEST)
     LIST(REMOVE_ITEM AUTO_TESTS onself cow)
-ENDIF()
-
-IF(CAN_ONLY_SELFTEST)
-    LIST(REMOVE_ITEM AUTO_TESTS onchild_fork)
 ENDIF()
 
 FOREACH(T ${AUTO_TESTS}) 
