@@ -59,7 +59,7 @@ libvas has no external non-OS dependencies and is written in C++-compatible C89 
 
 ## TODO
 
-- [X] Add support for `ptrace(PT_IO, ...)` on BSD
+- [ ] Add support for `ptrace(PT_IO, ...)` on BSD
 - [ ] Make Backends selectable at run time
 - [ ] Partition backends: ringbuffer, CoW, memory peek/poke?
 - [ ] Trapping access violations

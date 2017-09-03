@@ -87,31 +87,16 @@ int vas_read(vas_t *vas, const vas_addr_t _src, void* dst, size_t len) {
         if (waitpid(vas->pid, &status, 0) != vas->pid) {
             if (errno == EINTR) goto retry;
             vas_report("waitpid(tracee) failed");
-            goto cleanup;
+            goto error;
         }
     }
 
-    errno = 0;
-
-#if HAVE_PT_IO
-    (void)firstchunk_size; (void)offset; (void)word;
-    {
-        struct ptrace_io_desc desc;
-        desc.piod_op   = PIOD_READ_D;
-        desc.piod_offs = src;
-        desc.piod_addr = dst;
-        desc.iod_len   = len;
-
-        if (ptrace(PT_IO, vas->pid, &desc, 0) == -1)
-            vas_report("ptrace(PT_IO) failed");
-    }
-#else
 
     /* We need to handle the first and last block specially, because of alignment */
     word = ptrace(PTRACE_PEEKDATA, vas->pid, src - offset, 0);
     if (word == -1 && errno) {
         vas_report("ptrace(read first chunk) failed");
-        goto cleanup;
+        goto error;
     }
     dst = my_mempcpy(dst, (char*)&word + offset, firstchunk_size);
     src += firstchunk_size;
@@ -139,11 +124,14 @@ int vas_read(vas_t *vas, const vas_addr_t _src, void* dst, size_t len) {
         }
     }
 
-cleanup:
-#endif
     if (ptrace(PTRACE_DETACH, vas->pid, 0, 0) == -1)
         vas_report("ptrace(detach) failed");
-    return errno ? -1 : src - (char*)_src;
+    return src - (char*)_src;
+
+error:
+    if (ptrace(PTRACE_DETACH, vas->pid, 0, 0) == -1)
+        vas_report("ptrace(detach) failed");
+    return -1;
 }
 
 int vas_write(vas_t* vas, vas_addr_t _dst, const void* _src, size_t len) {
@@ -157,7 +145,7 @@ int vas_write(vas_t* vas, vas_addr_t _dst, const void* _src, size_t len) {
 
     if (ptrace(PTRACE_ATTACH, vas->pid, 0, 0) == -1) {
         vas_report("ptrace(attach) failed");
-        goto cleanup;
+        goto error;
     }
 
     {
@@ -166,30 +154,15 @@ int vas_write(vas_t* vas, vas_addr_t _dst, const void* _src, size_t len) {
         if (waitpid(vas->pid, &status, 0) != vas->pid) {
             if (errno == EINTR) goto retry;
             vas_report("waitpid(tracee) failed");
-            goto cleanup;
+            goto error;
         }
     }
-
-    errno = 0;
-#if HAVE_PT_IO
-    (void)firstchunk_size; (void)offset; (void)word;
-    {
-        struct ptrace_io_desc desc;
-        desc.piod_op   = PIOD_WRITE_D;
-        desc.piod_offs = dst;
-        desc.piod_addr = src;
-        desc.iod_len   = len;
-
-        if (ptrace(PT_IO, vas->pid, &desc, 0) == -1)
-            vas_report("ptrace(PT_IO) failed");
-    }
-#else
 
     /* We need to handle the first and last block specially, because of alignment */
     word = ptrace(PTRACE_PEEKDATA, vas->pid, dst - offset, 0);
     if (word == -1 && errno) {
         vas_report("ptrace(read first chunk) failed");
-        goto cleanup;
+        goto error;
     }
     memcpy((char*)&word + offset, src, firstchunk_size);
     if (ptrace(PTRACE_POKEDATA, vas->pid, dst - offset, word) == -1) {
@@ -223,9 +196,12 @@ int vas_write(vas_t* vas, vas_addr_t _dst, const void* _src, size_t len) {
         }
     }
 
-cleanup:
-#endif
     if (ptrace(PTRACE_DETACH, vas->pid, 0, 0) == -1)
         vas_report("ptrace(detach) failed");
-    return errno ? -1 : src - (char*)_src;
+    return src - (char*)_src;
+
+error:
+    if (ptrace(PTRACE_DETACH, vas->pid, 0, 0) == -1)
+        vas_report("ptrace(detach) failed");
+    return -1;
 }
