@@ -8,7 +8,9 @@ Multi-platform C lib for peeking/poking/handling virtual memory
 
 [![Build Status](https://travis-ci.org/a3f/libvas.svg?branch=master)](https://travis-ci.org/a3f/libvas)
 [![Build status](https://ci.appveyor.com/api/projects/status/q68mvjmksaide04c/branch/master?svg=true)](https://ci.appveyor.com/project/a3f/libvas/branch/master)
-[![CPAN testers](https://img.shields.io/badge/CPAN%20Testers-Alien::libvas-blue.svg)](http://www.cpantesters.org/distro/A/Alien-libvas.html)
+[![CPAN testers](https://img.shields.io/badge/CPAN%20Testers-Alien::libvas-orange.svg)](http://www.cpantesters.org/distro/A/Alien-libvas.html)
+[![Perl Wrapper](https://img.shields.io/badge/Perl%20Wrapper-Proc%3A%3AMemory-blue.svg)](https://metacpan.org/pod/Proc::Memory)
+
 
 ## Features
 
@@ -20,12 +22,12 @@ Multi-platform C lib for peeking/poking/handling virtual memory
 
 ## Install
 
-If Perl is available, you can run:
+With Perl available, you can run:
 
     cpan Alien::libvas
     ln $(perl -MAlien::libvas -e 'print Alien::libvas->dist_dir')/share/pkgconfig/libvas.pc /usr/local/share/pkgconfig/
 
-This fetches CMake if unavailable, uses it to build the library, installs the Perl wrapper and runs its test suite. See [Alien::libvas] for details.
+This fetches CMake if unavailable, uses it to build the library, installs the Perl wrapper and runs both the C and Perl test suite. See [Alien::libvas] for details.
 
 Afterwards you can use `pkg-config --libs libvas` and `pkg-config --cflags libvas` in your build scripts.
 
@@ -34,8 +36,9 @@ Afterwards you can use `pkg-config --libs libvas` and `pkg-config --cflags libva
     git clone https://github.com/a3f/libvas.git && cd libvas
     mkdir build && cd build
     cmake ..
-    make install
+    make
     ctest
+    make install
 
 Some manual tests/examples are available in `test/manual/`. Applicable tests in `test/` are run automatically on `ctest`.
 
@@ -44,7 +47,7 @@ Some manual tests/examples are available in `test/manual/`. Applicable tests in 
 Multiple backends are available, each corresponding to a directory in the source hierarchy:
 
     • win32      - Windows API's {Read,Write}ProcessMemory
-    • mach       - Mach Virtual Memory API (vm_copy) - macOS and GNU Hurd
+    • mach       - Mach Virtual Memory API (vm_copy) - macOS and possibly GNU Hurd
     • process_vm - process_vm_{readv, writev} on Linux 3.2+
     • procfs     - /proc/$pid/mem on Linux and some BSDs, /proc/$pid/as on SunOS
     • ptrace     - ptrace(2), available on many Unices
@@ -54,13 +57,14 @@ The appropriate backend is selected by CMake at configuration time. You can over
 
 libvas has no external non-OS dependencies and is written in C++-compatible C89 and should compilable by any standard C or C++ compiler.
 
-## Wrappers
-
-See [Proc::Memory] for a Perl interface to the library.
-
 ## TODO
 
-- [ ] Add supportPT_IO 
+- [ ] Add support for `ptrace(PT_IO, ...)` on BSD
+- [ ] Make Backends selectable at run time
+- [ ] Partition backends: ringbuffer, CoW, memory peek/poke?
+- [ ] Trapping access violations
+- [ ] Guard page allocation?
+- [ ] Wrappers for other scripting languages
 
 ## License
 
