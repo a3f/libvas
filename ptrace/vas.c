@@ -19,14 +19,17 @@
 #error "Peculiar ptrace(2) detected: Return type not of same size as any of [char,short,int,long]"
 #endif
 
-/* TODO PT_IO support for BSD */
+#define vas_perror perror
+#define vas_report_cond (vas->flags & VAS_O_REPORT_ERROR)
 
 struct vas_t {
     int flags;
     pid_t pid;
 };
 
-vas_t *vas_self(void) {
+vas_t *
+vas_self(void)
+{
     /*
      * Some systems (Linux 3.4+, I think?) support ptracing another thread in the same process
      * We don't though.
@@ -35,7 +38,9 @@ vas_t *vas_self(void) {
 }
 
 
-vas_t *vas_open(pid_t pid, int flags) {
+vas_t *
+vas_open(pid_t pid, int flags)
+{
     struct vas_t *vas;
 
     if (flags & ~(VAS_O_REPORT_ERROR | VAS_O_FORCE_SELF)) {
@@ -57,17 +62,22 @@ vas_t *vas_open(pid_t pid, int flags) {
     return vas;
 }
 
-void vas_close(vas_t *vas) {
+void
+vas_close(vas_t *vas)
+{
     if (vas == vas_self())
         return;
     free(vas);
 }
 
 #define my_mempcpy(dst,src,len) ((void*)((char*)memcpy((dst), (src), (len)) + len))
-#undef MIN
+#ifndef MIN
 #define MIN(a,b) ( (a) < (b) ? (a) : (b) )
+#endif
 
-int vas_read(vas_t *vas, const vas_addr_t _src, void* dst, size_t len) {
+int
+vas_read(vas_t *vas, const vas_addr_t _src, void* dst, size_t len)
+{
     ptrace_word word;
     size_t offset = _src & (sizeof word - 1);
     char *src = (char*)_src;
@@ -148,7 +158,9 @@ cleanup:
     return errno ? -1 : src - (char*)_src;
 }
 
-int vas_write(vas_t* vas, vas_addr_t _dst, const void* _src, size_t len) {
+int
+vas_write(vas_t* vas, vas_addr_t _dst, const void* _src, size_t len)
+{
     ptrace_word word;
     size_t offset = _dst & (sizeof word - 1);
     char *src = (char*)_src, *dst = (char*)_dst;

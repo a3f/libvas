@@ -20,6 +20,9 @@
     #define MAP_ANONYMOUS MAP_ANON
 #endif
 
+#define vas_perror perror
+#define vas_report_cond (flags & VAS_O_REPORT_ERROR)
+
 struct vas_ringbuf_t {
     void *addr;
     vas_t *vas;
@@ -30,14 +33,14 @@ struct vas_ringbuf_t {
 #define require(cond, msg, label)   \
     do {                            \
          if (unlikely(!(cond)))   { \
-            if (flags & VAS_O_REPORT_ERROR) {                \
-                fprintf(stderr, __FILE__ ":" TOSTR(__LINE__) ":%s: %s\n", msg, strerror(errno)); \
-            }                                                     \
+             vas_report(msg);       \
              goto label;            \
          }                          \
     } while (0)
 
-vas_ringbuf_t *vas_ringbuf_alloc(vas_t *vas, size_t pagecount, int flags) {
+vas_ringbuf_t *
+vas_ringbuf_alloc(vas_t *vas, size_t pagecount, int flags)
+{
     struct vas_ringbuf_t *ringbuf = NULL;
     int fd, mapover_fd = -1, ret;
     void *addr, *half, *_ringbuf;
@@ -124,19 +127,19 @@ end:
 #if HAVE_SHM_OPEN
 		ret = shm_unlink(path);
 		if (ret != 0)
-			vas_report_flags(flags, "shm_unlink");
+			vas_report("shm_unlink");
 #endif
 
 		ret = close(fd);
 		if (ret != 0)
-			vas_report_flags(flags, "close");
+			vas_report("close");
 	}
 
 #ifndef MAP_ANONYMOUS
 	if (mapover_fd != -1) {
 		ret = close(mapover_fd);
 		if (ret != 0)
-			vas_report_flags(flags, "close mapover_fd");
+			vas_report("close mapover_fd");
 	}
 #endif
 
@@ -144,7 +147,9 @@ end:
     return ringbuf;
 }
 
-void vas_ringbuf_free(vas_ringbuf_t *ringbuf) {
+void
+vas_ringbuf_free(vas_ringbuf_t *ringbuf)
+{
     munmap(ringbuf->addr, 2 * ringbuf->len);
     free(ringbuf);
 }

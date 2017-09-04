@@ -1,6 +1,5 @@
-#include <vas.h>
-#include <vas-internal.h>
 #include "vas-mach.h"
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <mach/mach.h>
@@ -17,8 +16,12 @@ struct vas_ringbuf_t {
     size_t len;
 };
 
-vas_ringbuf_t *vas_ringbuf_alloc(vas_t *vas, size_t pagecount, int flags) {
-    struct vas_ringbuf_t *ringbuf;
+#define vas_report_cond (flags & VAS_O_REPORT_ERROR)
+
+vas_ringbuf_t *
+vas_ringbuf_alloc(vas_t *vas, size_t pagecount, int flags)
+{
+    struct vas_ringbuf_t *ringbuf = NULL;
     kern_return_t ret;
     void *addr;
     vm_address_t half;
@@ -28,16 +31,25 @@ vas_ringbuf_t *vas_ringbuf_alloc(vas_t *vas, size_t pagecount, int flags) {
     (void) flags;
 
     ret = vm_allocate(vas->port, (vm_address_t *)&addr, 2*len, VM_FLAGS_ANYWHERE);
-    require(ret == KERN_SUCCESS, fail);
+    if (ret != KERN_SUCCESS) {
+        vas_report("vm_allocate region");
+        goto fail;
+    }
 
     ret = vm_allocate(vas->port, (vm_address_t *)&addr, len, VM_FLAGS_FIXED | VM_FLAGS_OVERWRITE);
-    require(ret == KERN_SUCCESS, free_first_half);
+    if (ret != KERN_SUCCESS) {
+        vas_report("vm_allocate first half");
+        goto free_first_half;
+    }
 
     ret = mach_make_memory_entry(
             vas->port, &len, (vm_offset_t)addr, VM_PROT_READ | VM_PROT_WRITE,
             &mapping_port, name_parent
     );
-    require(ret == KERN_SUCCESS, free_memory_entry);
+    if (ret != KERN_SUCCESS) {
+        vas_report("mach_make_memory_entry");
+        goto free_memory_entry;
+    }
 
     half = (vm_address_t)((char*)addr + len);
 
@@ -54,10 +66,10 @@ vas_ringbuf_t *vas_ringbuf_alloc(vas_t *vas, size_t pagecount, int flags) {
             VM_PROT_READ | VM_PROT_WRITE,
             VM_INHERIT_NONE /* might need atfork to make this work properly */
     );
-    require(ret == KERN_SUCCESS, free_second_half);
-
-
-
+    if (ret != KERN_SUCCESS) {
+        vas_report("vm_map");
+        goto free_second_half;
+    }
 
     ringbuf = (vas_ringbuf_t*)malloc(sizeof *ringbuf);
     ringbuf->vas = vas;
@@ -65,18 +77,21 @@ vas_ringbuf_t *vas_ringbuf_alloc(vas_t *vas, size_t pagecount, int flags) {
     ringbuf->mapping_port = mapping_port;
     ringbuf->len = len;
 
-
     return ringbuf;
 
-free_first_half:
-free_memory_entry: 
+#if 0 /* FIXME what were I thinking */
+cleanup:
+#endif
 free_second_half:
-
+free_memory_entry: 
+free_first_half:
 fail:
     return NULL;
 }
 
-void vas_ringbuf_free(vas_ringbuf_t *ringbuf) {
+void
+vas_ringbuf_free(vas_ringbuf_t *ringbuf)
+{
     vm_deallocate(ringbuf->mapping_port, (vm_address_t)ringbuf->addr, 2*ringbuf->len);
     free(ringbuf);
 }

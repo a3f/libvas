@@ -1,5 +1,3 @@
-#include "vas.h"
-#include "vas-internal.h"
 #include "vas-mach.h"
 
 #include <mach/mach.h>
@@ -13,7 +11,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-vas_t *vas_self(void) {
+#define vas_report_cond (vas->flags & VAS_O_REPORT_ERROR)
+
+vas_t *
+vas_self(void)
+{
     static vas_t self;
     if (self.pid == 0) {
         self.pid  = -1;
@@ -27,7 +29,9 @@ vas_t *vas_self(void) {
  * https://github.com/mbebenita/rustdbg/blob/2da16c70fa29564971478eb0b5619b61a61803a3/lib/src/MDBShared.cpp
  */
 
-vas_t *vas_open(pid_t pid, int flags) {
+vas_t *
+vas_open(pid_t pid, int flags)
+{
     struct vas_t *vas;
     mach_port_t port;
     kern_return_t kret;
@@ -50,13 +54,17 @@ vas_t *vas_open(pid_t pid, int flags) {
     return vas;
 }
 
-void vas_close(vas_t *vas) {
+void
+vas_close(vas_t *vas)
+{
     if (vas == vas_self())
         return;
     free(vas);
 }
 
-int vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
+int
+vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len)
+{
     kern_return_t kret;
     ssize_t nbytes;
 
@@ -74,12 +82,13 @@ int vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
     if (kret == KERN_SUCCESS)
         return nbytes;
 
-    if (vas->flags & VAS_O_REPORT_ERROR)
-        fprintf(stderr, "mach_vm_read_overwrite failed");
+    vas_report("mach_vm_read_overwrite failed");
     return -1;
 }
 
-int vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len) {
+int
+vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len)
+{
     kern_return_t kret;
     ssize_t nbytes;
 
@@ -99,78 +108,13 @@ int vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len) {
     if (kret == KERN_SUCCESS)
         return nbytes;
 
-    if (vas->flags & VAS_O_REPORT_ERROR)
-        fprintf(stderr, "mach_vm_write failed");
+    vas_report("mach_vm_write failed");
     return -1;
 }
 
-struct vas_poll_t {
-    vas_t *vas;
-    vas_addr_t addr;
-    size_t size;
-
-    vm_address_t page;
-    void *map;
-
-};
-
-vas_poll_t *vas_poll_new(vas_t *vas, vas_addr_t addr, size_t size, int flags) {
-
-    vas_poll_t *handle;
-    vm_prot_t curProtection, maxProtection;
-    kern_return_t err;
-    vm_address_t page;
-
-    if (flags != 0)
-        return NULL;
-
-    err = vm_remap(
-             mach_task_self(),
-             &page,
-             size,
-             0, /* mask */
-             1,
-             vas->port,
-             addr,
-             FALSE, /* copy */
-             &curProtection,
-             &maxProtection,
-             VM_INHERIT_SHARE
-     );
-
-    if (err != KERN_SUCCESS) {
-        if (vas->flags & VAS_O_REPORT_ERROR)
-            fprintf(stderr, "vm_remap failed");
-        return NULL;
-    }
-
-    handle = (vas_poll_t*)malloc(sizeof *handle);
-
-    handle->vas  = vas;
-    handle->addr = addr;
-    handle->size = size;
-
-    handle->page = page;
-    handle->map = (void*)(page + (addr & (vas_pagesize()-1)));
-
-    return handle;
-}
-
-int vas_poll(vas_poll_t *p, void* buf) {
-    memcpy(buf, p->map, p->size);
-    return p->size;
-}
-
-void vas_poll_del(vas_poll_t *p) {
-    vm_deallocate(
-        mach_task_self(),
-        p->page,
-        (vm_address_t)p->map + p->size - p->page
-    );
-    free(p);
-}
-
-int vas_pagesize(void) {
+int
+vas_pagesize(void)
+{
     vm_size_t size;
     kern_return_t ret = host_page_size(mach_host_self(), &size);
     return ret == KERN_SUCCESS ? (int)size : -1;

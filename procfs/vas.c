@@ -19,6 +19,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define vas_perror perror
+#define vas_report_cond (vas->flags & VAS_O_REPORT_ERROR)
+
 /* (racy) alternatives for when pread/pwrite aren't available */
 #if !HAVE_PREAD
 static ssize_t my_pread(int fd, void *buf, size_t count, off_t offset) {
@@ -52,7 +55,9 @@ struct vas_t {
 };
 
 
-vas_t *vas_open(pid_t pid, int flags) {
+vas_t *
+vas_open(pid_t pid, int flags)
+{
     struct vas_t *vas;
     /* snprintf is C99 */
     char filename[24];
@@ -91,7 +96,9 @@ vas_t *vas_open(pid_t pid, int flags) {
     return vas;
 }
 
-void vas_close(vas_t *vas) {
+void
+vas_close(vas_t *vas)
+{
     if (vas == vas_self())
         return;
     close(vas->memfd);
@@ -99,7 +106,9 @@ void vas_close(vas_t *vas) {
     free(vas);
 }
 
-int vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len) {
+int
+vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len)
+{
     ssize_t nbytes = -1;
 
 #if defined HAVE_PTRACE && ! defined __sun
@@ -140,7 +149,9 @@ end:
     return -1;
 }
 
-int vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len) {
+int
+vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len)
+{
     ssize_t nbytes = -1;
 
 #if defined HAVE_PTRACE && ! defined __sun

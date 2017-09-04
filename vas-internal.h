@@ -5,8 +5,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <vas.h>
 
 #ifdef __GNUC__ 
 #define likely(cond)       __builtin_expect((cond), 1)
@@ -31,14 +29,15 @@
 
 #define vas_die_on(cond) do { if (cond) vas_exit(); } while (0)
 
+/* strerror isn't thread-safe and strerror_r isn't C89 */
 #define vas_report_on(cond, msg) do {                              \
     if (cond) { \
-        fprintf(stderr, __FILE__ ":" TOSTR(__LINE__) ":%s: %s\n", msg, strerror(errno)); \
+        fputs(__FILE__ ":" TOSTR(__LINE__) ": ", stderr); \
+        perror(msg); \
     }                                                     \
 } while(0)
 
-#define vas_report_flags(flags, msg) vas_report_on(flags & VAS_O_REPORT_ERROR, msg)
-#define vas_report(msg) vas_report_on(vas->flags, msg)
+#define vas_report(msg) vas_report_on(vas_report_cond, msg)
 
 #if HAVE_LIBPID_H
     #include <libpid.h>
