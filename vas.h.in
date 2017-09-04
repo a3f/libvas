@@ -73,7 +73,7 @@ int vas_read(vas_t *vas, const vas_addr_t, void*, size_t);
 int vas_write(vas_t*, vas_addr_t, const void*, size_t);
 
 /**
- * Effecient memory searching
+ * Efficient memory searching
  */
 int vas_search(vas_t*, const vas_addr_t, const void*, size_t);
 
@@ -89,6 +89,7 @@ vas_addr_t vas_fmap(vas_t *vas, const char*, off_t, size_t, int flags);
 
 
 
+#if 0
 /**
  * atomically reading multiple values
  * Is this even viable?
@@ -102,6 +103,7 @@ struct vas_addrvec {
 int vas_readv(vas_t*, const struct vas_addrvec[], int vec_len);
 
 int vas_writev(vas_t*, const struct vas_addrvec[], int vec_len);
+#endif
 
 
 /**

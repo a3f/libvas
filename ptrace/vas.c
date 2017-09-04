@@ -49,10 +49,7 @@ vas_open(pid_t pid, int flags)
         return NULL;
     }
 
-    if (vas_self() == NULL && pid == pid_self()) {
-        if (flags & VAS_O_FORCE_SELF)
-            return vas_self();
-
+    if (!(flags & VAS_O_FORCE_SELF) && vas_self() == NULL && pid == pid_self()) {
         if (flags & VAS_O_REPORT_ERROR)
             fputs("ptrace(2) backend can't operate on own process\n", stderr);
         return NULL;
@@ -88,7 +85,7 @@ vas_read(vas_t *vas, const vas_addr_t _src, void* dst, size_t len)
 
     if (!len)
         return 0;
-    if (vas == vas_self()) {
+    if (vas == vas_self() || vas->pid == pid_self()) {
         memcpy(dst, src, len);
         return len;
     }
@@ -176,7 +173,7 @@ vas_write(vas_t* vas, vas_addr_t _dst, const void* _src, size_t len)
 
     if (!len)
         return 0;
-    if (vas == vas_self()) {
+    if (vas == vas_self() || vas->pid == pid_self()) {
         memcpy(dst, src, len);
         return len;
     }

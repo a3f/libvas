@@ -10,20 +10,18 @@ int main(void) {
     long copy;
     int nbytes;
     /* vas_t *proc = vas_open(getpid(), 0); */
-    vas_t *procs[3], **proc = procs;
+    vas_t *procs[2], **proc = procs;
     vas_poll_t *poller;
     vas_addr_t addr = (vas_addr_t)&val;
 
 #ifdef pid_self
     *procs = vas_open(pid_self(), VAS_O_REPORT_ERROR | VAS_O_FORCE_SELF);
-    if (vas_self()) ISNT(*proc, NULL, "vas_open() on self");
+    ISNT(*proc, NULL, "vas_open() on self");
     proc++;
 #endif
     *proc = vas_self();
-    proc++;
-    *proc = NULL;
 
-    for (proc = procs; *proc; proc++) {
+    for (; proc != procs; proc--) {
         if (proc == &procs[1]) puts("vas_self():");
 
         val = 0;
