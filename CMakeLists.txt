@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.0)
 project(vas C)
-set(PROJECT_VERSION 0.731)
+set(PROJECT_VERSION 0.732)
 
 INCLUDE (CheckIncludeFiles)
 INCLUDE (CheckTypeSize)
@@ -232,7 +232,6 @@ ELSEIF("${BACKEND}" STREQUAL ptrace)
     IF (NOT (HAVE_PID_SELF OR pid_self))
         MESSAGE(FATAL_ERROR "Backend requires a function to retrieve own pid, but none found.")
     ENDIF()
-    SET(CANT_SELFTEST 1)
     file(GLOB SOURCES ${SOURCES} ptrace/*.c posix/*.c poll.c dup.c)
 
 ELSEIF("${BACKEND}" STREQUAL memcpy)
@@ -287,10 +286,6 @@ foreach(T ${AUTO_TESTS})
     target_link_libraries(${T} ${PROJECT_NAME})
     set_target_properties(${T} PROPERTIES OUTPUT_NAME "${T}")
 endforeach(T)
-
-IF(CANT_SELFTEST)
-    LIST(REMOVE_ITEM AUTO_TESTS onself cow)
-ENDIF()
 
 FOREACH(T ${AUTO_TESTS}) 
     add_test(${T} ${CMAKE_CURRENT_BINARY_DIR}/${T})

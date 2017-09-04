@@ -32,7 +32,7 @@ vas_self(void)
 {
     /*
      * Some systems (Linux 3.4+, I think?) support ptracing another thread in the same process
-     * We don't though.
+     * We don't though. We fall back to memcpy when VAS_O_FORCE_SELF is specified
      */
     return NULL;
 }
@@ -49,7 +49,10 @@ vas_open(pid_t pid, int flags)
         return NULL;
     }
 
-    if (!(flags & VAS_O_FORCE_SELF) && vas_self() == NULL && pid == pid_self()) {
+    if (vas_self() == NULL && pid == pid_self()) {
+        if (flags & VAS_O_FORCE_SELF)
+            return vas_self();
+
         if (flags & VAS_O_REPORT_ERROR)
             fputs("ptrace(2) backend can't operate on own process\n", stderr);
         return NULL;
@@ -85,6 +88,11 @@ vas_read(vas_t *vas, const vas_addr_t _src, void* dst, size_t len)
 
     if (!len)
         return 0;
+    if (vas == vas_self()) {
+        memcpy(dst, src, len);
+        return len;
+    }
+        
 
     if (ptrace(PTRACE_ATTACH, vas->pid, 0, 0) == -1) {
         vas_report("ptrace(attach) failed");
@@ -168,6 +176,10 @@ vas_write(vas_t* vas, vas_addr_t _dst, const void* _src, size_t len)
 
     if (!len)
         return 0;
+    if (vas == vas_self()) {
+        memcpy(dst, src, len);
+        return len;
+    }
 
     if (ptrace(PTRACE_ATTACH, vas->pid, 0, 0) == -1) {
         vas_report("ptrace(attach) failed");

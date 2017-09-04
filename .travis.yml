@@ -5,17 +5,17 @@ dist: trusty
 matrix:
     include:
         - os: linux
-          env: CC=gcc BITS=32
+          env: BITS=32 CC=gcc
         - os: linux
-          env: CC=clang BITS=64
+          env: BITS=64 CC=clang
         - os: linux
-          env: CC=gcc BITS=32 BACKEND=ptrace
+          env: BACKEND=ptrace BITS=32 CC=gcc
         - os: linux
-          env: CC=clang BITS=64 BACKEND=procfs
+          env: BACKEND=procfs BITS=64 CC=clang
         - os: osx
-          env: CC=clang BITS=32
+          env: BITS=32 CC=clang 
         - os: osx
-          env: CC=gcc BITS=64
+          env: BITS=64 CC=gcc 
 
 
 before_install:
@@ -25,11 +25,13 @@ before_install:
 
 before_script:
     - export VERBOSE=1
+    - export CFLAGS=-m$BITS
+    - export LDFLAGS=-m$BITS
 
 script:
     - mkdir -p build
     - cd build
-    - CFLAGS=-m$BITS LDFLAGS=-m$BITS cmake -DBACKEND=$BACKEND ..
+    - cmake -DBACKEND=$BACKEND ..
     - make
     - sudo make install
     - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then ctest --output-on-failure ; fi
