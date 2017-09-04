@@ -19,7 +19,7 @@ vas_poll_new(vas_t *vas, vas_addr_t addr, size_t size, int flags)
     vas_poll_t *handle;
     vm_prot_t curProtection, maxProtection;
     kern_return_t kret;
-    vm_address_t page;
+    vm_address_t page = (vm_address_t)0;
 
     if (flags & ~(VAS_O_REPORT_ERROR))
         return NULL;
