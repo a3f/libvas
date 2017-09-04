@@ -43,9 +43,9 @@ int main(void) {
         IS(copy, 2, "Written value is correct");
 
 
-        poller = vas_poll_new(*proc, addr, sizeof (long), 0);
+        poller = vas_poll_new(*proc, addr, sizeof (long), VAS_O_REPORT_ERROR);
 
-        IS(val, 2, "Read value is correct");
+        ISNT(poller, NULL, "vas_poll failed");
         copy = 0;
 
         nbytes = vas_poll(poller, &copy);

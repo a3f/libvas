@@ -22,7 +22,7 @@ vas_ringbuf_t *
 vas_ringbuf_alloc(vas_t *vas, size_t pagecount, int flags)
 {
     struct vas_ringbuf_t *ringbuf = NULL;
-    kern_return_t ret;
+    kern_return_t kret;
     void *addr;
     vm_address_t half;
     mach_port_t mapping_port;
@@ -30,30 +30,30 @@ vas_ringbuf_alloc(vas_t *vas, size_t pagecount, int flags)
     vm_size_t len = vas_pagesize() * pagecount;
     (void) flags;
 
-    ret = vm_allocate(vas->port, (vm_address_t *)&addr, 2*len, VM_FLAGS_ANYWHERE);
-    if (ret != KERN_SUCCESS) {
+    kret = vm_allocate(vas->port, (vm_address_t *)&addr, 2*len, VM_FLAGS_ANYWHERE);
+    if (kret != KERN_SUCCESS) {
         vas_report("vm_allocate region");
         goto fail;
     }
 
-    ret = vm_allocate(vas->port, (vm_address_t *)&addr, len, VM_FLAGS_FIXED | VM_FLAGS_OVERWRITE);
-    if (ret != KERN_SUCCESS) {
+    kret = vm_allocate(vas->port, (vm_address_t *)&addr, len, VM_FLAGS_FIXED | VM_FLAGS_OVERWRITE);
+    if (kret != KERN_SUCCESS) {
         vas_report("vm_allocate first half");
         goto free_first_half;
     }
 
-    ret = mach_make_memory_entry(
+    kret = mach_make_memory_entry(
             vas->port, &len, (vm_offset_t)addr, VM_PROT_READ | VM_PROT_WRITE,
             &mapping_port, name_parent
     );
-    if (ret != KERN_SUCCESS) {
+    if (kret != KERN_SUCCESS) {
         vas_report("mach_make_memory_entry");
         goto free_memory_entry;
     }
 
     half = (vm_address_t)((char*)addr + len);
 
-    ret = vm_map(
+    kret = vm_map(
             vas->port,
             &half,
             len,
@@ -61,12 +61,12 @@ vas_ringbuf_alloc(vas_t *vas, size_t pagecount, int flags)
             VM_FLAGS_FIXED | VM_FLAGS_OVERWRITE,
             mapping_port,
             0, /* offset */
-            FALSE, /* no copy, map */
+            VM_INHERIT_SHARE, /* no copy */
             VM_PROT_READ | VM_PROT_WRITE,
             VM_PROT_READ | VM_PROT_WRITE,
             VM_INHERIT_NONE /* might need atfork to make this work properly */
     );
-    if (ret != KERN_SUCCESS) {
+    if (kret != KERN_SUCCESS) {
         vas_report("vm_map");
         goto free_second_half;
     }

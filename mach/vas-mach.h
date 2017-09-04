@@ -17,6 +17,6 @@ int vas_mach_strerror_r(kern_return_t errnum, char *strerrbuf, size_t buflen);
 const char *vas_mach_strerror(kern_return_t errnum);
 void vas_mach_perror(kern_return_t errnum, const char *usermsg);
 
-#define vas_perror vas_mach_perror
+#define vas_perror(msg) vas_mach_perror(kret, msg)
 
 #endif

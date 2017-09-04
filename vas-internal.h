@@ -33,7 +33,7 @@
 #define vas_report_on(cond, msg) do {                              \
     if (cond) { \
         fputs(__FILE__ ":" TOSTR(__LINE__) ": ", stderr); \
-        perror(msg); \
+        vas_perror(msg); \
     }                                                     \
 } while(0)
 

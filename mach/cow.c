@@ -6,17 +6,17 @@
 void *
 vas_dup_cow(vas_t *vas, const vas_addr_t src, size_t len)
 {
-    kern_return_t ret;
+    kern_return_t kret;
     vm_address_t dst;
 
-    ret = vm_allocate(vas->port, &dst, len,  TRUE /* anywhere */);
-    if (ret != KERN_SUCCESS) {
+    kret = vm_allocate(vas->port, &dst, len,  VM_FLAGS_ANYWHERE);
+    if (kret != KERN_SUCCESS) {
         vas_report("vm_allocate");
         return NULL;
     }
 
-    ret = vm_copy(vas->port, src, len, dst);
-    if (ret != KERN_SUCCESS) {
+    kret = vm_copy(vas->port, src, len, dst);
+    if (kret != KERN_SUCCESS) {
         vas_report("vm_copy");
         goto fail;
     }
@@ -24,8 +24,8 @@ vas_dup_cow(vas_t *vas, const vas_addr_t src, size_t len)
     return (void*)dst;
 
 fail:
-    ret = vm_deallocate(vas->port, (vm_address_t)dst, len);
-    if (ret != KERN_SUCCESS)
+    kret = vm_deallocate(vas->port, (vm_address_t)dst, len);
+    if (kret != KERN_SUCCESS)
         vas_report("vm_deallocate");
 
     return NULL;
@@ -34,11 +34,11 @@ fail:
 int
 vas_dup_cow_free(vas_t *vas, void* addr, size_t len)
 {
-    kern_return_t ret;
+    kern_return_t kret;
 
-    ret = vm_deallocate(vas->port, (vm_address_t)addr, len);
-    if (ret != KERN_SUCCESS)
+    kret = vm_deallocate(vas->port, (vm_address_t)addr, len);
+    if (kret != KERN_SUCCESS)
         vas_report("vm_deallocate");
 
-    return ret == KERN_SUCCESS ? 0 : -1;
+    return kret == KERN_SUCCESS ? 0 : -1;
 }
