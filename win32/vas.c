@@ -31,7 +31,7 @@ vas_t *vas_open(pid_t pid, int flags) {
     struct vas_t *vas;
     HANDLE process;
 
-    if (flags & ~(VAS_O_REPORT_ERROR | VAS_O_FORCE_SELF)) {
+    if (flags & ~(VAS_O_REPORT_ERROR)) {
         if (flags & VAS_O_REPORT_ERROR)
             fputs("Unknown bit in flags parameter\n", stderr);
         return NULL;

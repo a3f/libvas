@@ -32,7 +32,7 @@ vas_self(void)
 {
     /*
      * Some systems (Linux 3.4+, I think?) support ptracing another thread in the same process
-     * We don't though. We fall back to memcpy when VAS_O_FORCE_SELF is specified
+     * We don't though. We fall back to memcpy when pid_self() is given.
      */
     return NULL;
 }
@@ -43,16 +43,15 @@ vas_open(pid_t pid, int flags)
 {
     struct vas_t *vas;
 
-    if (flags & ~(VAS_O_REPORT_ERROR | VAS_O_FORCE_SELF)) {
+    if (flags & ~(VAS_O_REPORT_ERROR)) {
         if (flags & VAS_O_REPORT_ERROR)
             fputs("Unknown bit in flags parameter\n", stderr);
         return NULL;
     }
 
-    if (!(flags & VAS_O_FORCE_SELF) && vas_self() == NULL && pid == pid_self()) {
+    if (pid == pid_self()) {
         if (flags & VAS_O_REPORT_ERROR)
-            fputs("ptrace(2) backend can't operate on own process\n", stderr);
-        return NULL;
+            fputs("ptrace(2) backend can't operate on own process. Fallback to memcpy.\n", stderr);
     }
 
     vas = (struct vas_t*)malloc(sizeof *vas);

@@ -64,7 +64,7 @@ vas_open(pid_t pid, int flags)
     int fd;
     int ret;
 
-    if (flags & ~(VAS_O_REPORT_ERROR | VAS_O_FORCE_SELF)) {
+    if (flags & ~(VAS_O_REPORT_ERROR)) {
         if (flags & VAS_O_REPORT_ERROR)
             fputs("Unknown bit in flags parameter\n", stderr);
         return NULL;

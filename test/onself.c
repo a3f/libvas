@@ -15,7 +15,7 @@ int main(void) {
     vas_addr_t addr = (vas_addr_t)&val;
 
 #ifdef pid_self
-    *procs = vas_open(pid_self(), VAS_O_REPORT_ERROR | VAS_O_FORCE_SELF);
+    *procs = vas_open(pid_self(), VAS_O_REPORT_ERROR);
     ISNT(*proc, NULL, "vas_open() on self");
     proc++;
 #endif

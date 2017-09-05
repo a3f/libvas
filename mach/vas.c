@@ -35,7 +35,7 @@ vas_open(pid_t pid, int flags)
     struct vas_t *vas;
     mach_port_t port;
     kern_return_t kret;
-    if (flags & ~(VAS_O_REPORT_ERROR | VAS_O_FORCE_SELF)) {
+    if (flags & ~(VAS_O_REPORT_ERROR)) {
         if (flags & VAS_O_REPORT_ERROR)
             fputs("Unknown bit in flags parameter\n", stderr);
         return NULL;
