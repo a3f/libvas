@@ -13,6 +13,14 @@
 
 #else
 
+#define OK(cond, str) do {                                                \
+    if (cond) continue;                                                   \
+    fprintf(stderr, "%s:%d: Truth test \"%s\" ("  #cond  ")\n",           \
+                    __FILE__, __LINE__, str);                             \
+    fprintf(stderr, "     got:   %d\n", (int)cond);                       \
+    fprintf(stderr, "expected: != 0\n");                                  \
+    abort();                                                              \
+} while (0)
 
 #define IS(a, b, str) do {                                                \
     if (a == b) continue;                                                 \

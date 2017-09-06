@@ -30,6 +30,7 @@ vas_ringbuf_t *vas_ringbuf_alloc(vas_t *vas, size_t pagecount, int flags) {
     if (flags)
         return NULL;
 #endif
+    (void)flags;
 
     if (vas != vas_self())
         return NULL;

@@ -9,8 +9,13 @@ INCLUDE (CheckCSourceRuns)
 INCLUDE (CheckSymbolExists)
 set (CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+IF(WIN32)
+    add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
+ENDIF()
+
 #for whatever reason this doesn't work:
 #CHECK_INCLUDE_FILES(ptrace.h HAVE_SYS_PTRACE_H)
+CHECK_INCLUDE_FILES(inttypes.h VAS_HAVE_INT_TYPES_H)
 CHECK_C_SOURCE_COMPILES("#include <sys/types.h>
        #include <sys/ptrace.h>
       int main(void) { ptrace(0, 0, 0, 0); return 0; }"
@@ -84,6 +89,7 @@ IF (NOT HAVE_PID_SELF)
     ENDIF()
 ENDIF()
 CHECK_SYMBOL_EXISTS(fork unistd.h HAVE_FORK)
+CHECK_SYMBOL_EXISTS(popen stdio.h HAVE_POPEN)
 CHECK_SYMBOL_EXISTS(CreateProcessW windows.h HAVE_CREATEPROCESS)
 
 CHECK_INCLUDE_FILES(sys/mman.h VAS_HAVE_MMAN_H)
@@ -127,32 +133,34 @@ STRING(TOLOWER "${BACKEND}" BACKEND)
 # IF(EXISTS finds /proc/self/mem but not /proc/1/mem for whatever reason
 # FreeBSD has no /proc/1/mem, but has /proc/anyother_pid/mem
 
-MESSAGE(STATUS "Checking for /proc/$$/as")
-CHECK_C_SOURCE_RUNS("#include <sys/types.h>
-    #include <unistd.h>
-    #include <stdio.h>
-    char filename[32];
-    int main(void) {
-        if (sprintf(filename, \"/proc/%ld/as\", (long)getpid()) < 0) return 1;
-        return access( filename, F_OK );}"
-        HAVE_PROCFS_PID_AS)
+IF (CMAKE_CROSSCOMPILING)
+    MESSAGE(STATUS "Checking for /proc/$$/as")
+    CHECK_C_SOURCE_RUNS("#include <sys/types.h>
+        #include <unistd.h>
+        #include <stdio.h>
+        char filename[32];
+        int main(void) {
+            if (sprintf(filename, \"/proc/%ld/as\", (long)getpid()) < 0) return 1;
+            return access( filename, F_OK );}"
+            HAVE_PROCFS_PID_AS)
 
-IF (HAVE_PROCFS_PID_AS)
-    SET(PROCFS_MEM_OR_AS "as")
-ENDIF()
+    IF (HAVE_PROCFS_PID_AS)
+        SET(PROCFS_MEM_OR_AS "as")
+    ENDIF()
 
-MESSAGE(STATUS "Checking for /proc/$$/mem")
-CHECK_C_SOURCE_RUNS("#include <sys/types.h>
-    #include <unistd.h>
-    #include <stdio.h>
-    char filename[32];
-    int main(void) {
-        if (sprintf(filename, \"/proc/%ld/mem\", (long)getpid()) < 0) return 1;
-        return access( filename, F_OK );}"
-        HAVE_PROCFS_PID_MEM)
+    MESSAGE(STATUS "Checking for /proc/$$/mem")
+    CHECK_C_SOURCE_RUNS("#include <sys/types.h>
+        #include <unistd.h>
+        #include <stdio.h>
+        char filename[32];
+        int main(void) {
+            if (sprintf(filename, \"/proc/%ld/mem\", (long)getpid()) < 0) return 1;
+            return access( filename, F_OK );}"
+            HAVE_PROCFS_PID_MEM)
 
-IF (HAVE_PROCFS_PID_MEM)
-    SET(PROCFS_MEM_OR_AS "mem")
+    IF (HAVE_PROCFS_PID_MEM)
+        SET(PROCFS_MEM_OR_AS "mem")
+    ENDIF()
 ENDIF()
 
 IF (PROCFS_MEM_OR_AS)
@@ -276,6 +284,10 @@ IF(HAVE_FORK)
     LIST(APPEND AUTO_TESTS onchild_fork)
 ELSEIF(HAVE_CREATEPROCESS)
 ENDIF(HAVE_FORK)
+
+IF(HAVE_POPEN)
+    LIST(APPEND AUTO_TESTS onchild_popen)
+ENDIF()
 
 enable_testing()
 

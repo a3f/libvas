@@ -4,6 +4,7 @@
 #include <stddef.h>
 #cmakedefine VAS_HAVE_OFF_T 1
 #cmakedefine VAS_HAVE_PID_T 1
+#cmakedefine VAS_HAS_INT_TYPES_H 1
 
 /**
  * References a virtual address space
@@ -29,27 +30,38 @@ typedef struct vas_poll_t vas_poll_t;
     #include <stdint.h>
     #ifdef UINTPTR_MAX
         typedef uintptr_t vas_addr_t;
+        #define VAS_PRIaddr PRIXPTR
+        #define VAS_SCNaddr SCNXPTR
     #else
         typedef unsigned long long vas_addr_t;
+        #define VAS_PRIaddr "llx"
+        #define VAS_SCNaddr "llx"
     #endif /* UINTPTR_MAX */
 
 #else
 
     #if !VAS_IS_WIN32
         typedef unsigned long vas_addr_t;
+        #define VAS_PRIaddr "lx"
+        #define VAS_SCNaddr "lx"
 
     #else
 
         #if VAS_PTR_64BIT
             typedef unsigned __int64 vas_addr_t;
+            #define VAS_PRIaddr "I64x"
+            #define VAS_SCNaddr "I64x"
         #elif VAS_PTR_32BIT
             typedef unsigned long vas_addr_t;
+            #define VAS_PRIaddr "lx"
+            #define VAS_SCNaddr "lx"
         #else
             #error "CMake misconfiguration or very peculiar Windows detected"
         #endif /* VAS_PTR_64BIT */
 
     #endif /* !VAS_IS_WIN32 */
 #endif /* __STDC_VERSION__ >= 199901L */
+
 
 #if VAS_HAVE_LIBPID_H
     #include <libpid.h>
