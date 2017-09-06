@@ -11,28 +11,28 @@
 #define MAX_HEALTH 1500
 #define SPELL "exura gran"
 
-void heal(const char *spell);
-HANDLE hwnd;
+static void heal(const char *spell);
+static HWND hwnd;
 
-int main(int argc, char *argv[]) {
+int main(void)
+{
     uint32_t old_health = 0;
-    long pid;
-    if (argc != 2 || !(pid = strtol(argv[1], NULL, 0))) {
-        fprintf(stderr, "Specify PID as argument!\n");
-        exit(1);
-    }
+    vas_t *proc;
+    vas_poll_t *poller;
+    DWORD pid;
 
     hwnd = FindWindow("tibiaclient", NULL);
     assert(hwnd != (void*)-1);
+    GetWindowThreadProcessId(hwnd, &pid);
+
+    proc = vas_open(pid, 0);
+    assert(proc);
+    poller = vas_poll_new(proc, CHARACTER_HEALTH, sizeof(uint32_t), VAS_O_REPORT_ERROR);
+    assert(poller);
 
     while (1) {
-        vas_t *proc;
         uint32_t health;
-        int ret;
-        proc = vas_open(pid, 0);
-        assert(proc);
-        ret = vas_read(proc, CHARACTER_HEALTH, &health, sizeof(uint32_t));
-        assert(ret != -1);
+        vas_poll(poller, &health);
         if (health != old_health)
             printf("Character health is %" PRIu32 "\n", health);
         old_health = health;
@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
             while (health < MAX_HEALTH) {
                 heal(SPELL);
                 Sleep(MIN_HEALTH);
-                vas_read(proc, CHARACTER_HEALTH, &health, sizeof(uint32_t));
+                vas_poll(poller, &health);
                 printf("Character health is %" PRIu32 "\n", health);
             }
         }
@@ -49,13 +49,16 @@ int main(int argc, char *argv[]) {
 
         Sleep(350);
     }
+
+    vas_poll_del(poller);
+    return 0;
 }
-void send_char(char ch) {
+static void send_char(char ch) {
     SendMessage(hwnd, WM_KEYDOWN, ch - 0x20, 0);
     SendMessage(hwnd, WM_CHAR, ch, 0);
     SendMessage(hwnd, WM_KEYUP, ch - 0x20, 0);
 }
-void heal(const char *spell) {
+static void heal(const char *spell) {
     const char *ch;
     for (ch = spell; *ch; ch++)
         send_char(*ch);

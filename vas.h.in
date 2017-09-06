@@ -1,6 +1,7 @@
 #ifndef LIBVAS_VAS_H_
 #define LIBVAS_VAS_H_
 
+/** The header's version **/
 #define VAS_VERSION "${PROJECT_VERSION}"
 #cmakedefine VAS_HAVE_LIBPID_H   1
 #cmakedefine VAS_HAVE_MMAN_H     1
@@ -32,7 +33,7 @@ const char *vas_get_version(void);
 vas_t *vas_self(void);
 
 /* TODO some vas_error() function */
-enum {
+enum vas_o_flags {
     VAS_O_REPORT_ERROR = 2, /** Report errors to stderr, except for malloc returning NULL
                                 This is still work in progress. not all functions
                                 report errors **/
@@ -44,8 +45,8 @@ enum {
 
 /**
  * @param pid   process id
- * @param flags has to be zero
- * @returns handle
+ * @param flags one or more OR-d enum vas_o_flags
+ * @returns handle to VAS or NULL on error
  *
  * Opens a handle to a process' address space
  */
@@ -59,36 +60,74 @@ vas_t *vas_open(pid_t pid, int flags);
 void vas_close(vas_t *vas);
 
 /**
- * Reads size_t bytes from vas_t at vas_addr_t and
- * saves them to void*
- * The local and remote region may not overlap
+ * @param vas handle
+ * @param remote source address
+ * @param local destination address
+ * @param len number of bytes
+ * @note  The local and remote region may not overlap
+ * @returns number of bytes actually read from remote or -1 on error
+ *
+ * Reads len bytes from vas at remote address and
+ * saves them to the local address
  */
-int vas_read(vas_t *vas, const vas_addr_t, void*, size_t);
+int vas_read(vas_t *vas, const vas_addr_t remote, void *local, size_t len);
 
 /**
- * Write size_t to from vas_t at vas_addr_t from void*
- * The local and remote region may not overlap
+ * @param vas handle
+ * @param remote destination address
+ * @param local source address
+ * @param len number of bytes
+ * @note  The local and remote region may not overlap
+ * @returns number of bytes actually written to remote or -1 on error
+ *
+ * Writes len bytes to vas at remote address read from
+ * the local address
  */
-int vas_write(vas_t*, vas_addr_t, const void*, size_t);
+int vas_write(vas_t *vas, vas_addr_t remote, const void *local, size_t len);
 
+/**
+ * @returns the common page size in bytes
+ */
+int vas_pagesize(void);
+
+/**
+ * @param vas handle to VAS
+ * @param pagecount number of pages to mirror. On Windows this must be at least 16k pages
+ * @param flags one or more OR-d enum vas_o_flags
+ * @returns a pointer to a handle with the ring buffer base as first element or NULL on error
+ *
+ * Allocates a ring buffer facilitated by virtual memory (mirrored pages mapped back-to-back)
+ */
+vas_ringbuf_t *vas_ringbuf_alloc(vas_t *vas, size_t pagecount, int flags);
+
+/**
+ * @param base a handle returned by vas_ringbuf_alloc
+ * 
+ * Frees an allocated ring buffer
+ */
+void vas_ringbuf_free(vas_ringbuf_t *base);
+
+/**
+ * @param vas handle to VAS
+ * @param path a relative or absolute path to the file to be mapped
+ * @param offset The file offset to start mapping from
+ * @param len number of bytes
+ * @param flags one or more OR-d enum vas_o_flags
+ * @returns the address the file was mapped at
+ * @note This leaks
+ *
+ * Memory map a file
+ */
+vas_addr_t vas_fmap(vas_t *vas, const char *path, off_t offset, size_t len, int flags);
+
+
+
+#if 0
 /**
  * Efficient memory searching
  */
 int vas_search(vas_t*, const vas_addr_t, const void*, size_t);
 
-int vas_pagesize(void);
-
-vas_ringbuf_t *vas_ringbuf_alloc(vas_t*, size_t pagecount, int flags);
-void vas_ringbuf_free(vas_ringbuf_t *base);
-
-/**
- * File mapping
- */
-vas_addr_t vas_fmap(vas_t *vas, const char*, off_t, size_t, int flags);
-
-
-
-#if 0
 /**
  * atomically reading multiple values
  * Is this even viable?
@@ -106,28 +145,66 @@ int vas_writev(vas_t*, const struct vas_addrvec[], int vec_len);
 
 
 /**
- * Poll a buffer for changes
- * On supporting platforms, this remaps the page, saving subsequent TLB flushes
+ * @param vas handle
+ * @param remote source address
+ * @param len number of bytes
+ * @param flags one or more OR-d enum vas_o_flags
+ * @note On supporting platforms (Mach currently), this remaps the page, saving subsequent TLB flushes.
+ *
+ * Open a handle to poll a buffer for changes
  */
-vas_poll_t *vas_poll_new(vas_t*, vas_addr_t, size_t, int);
-int vas_poll(vas_poll_t*, void*);
-void vas_poll_del(vas_poll_t*);
+vas_poll_t *vas_poll_new(vas_t *vas, vas_addr_t remote, size_t len, int flags);
+
+/**
+ * @param handle a handle returned by \ref vas_poll_new
+ * @param dst the destination buffer where len bytes specified in \ref vas_poll_new are written
+ * @returns number of bytes read. a byte count less than len on incomplete read and -1 on error
+ *
+ * Read a poll handle for the new value
+ */
+int vas_poll(vas_poll_t *handle, void *dst);
+
+/**
+ * @param handle a handle returned by \ref vas_poll_new
+ *
+ * Deletes an open poll handle 
+ */
+void vas_poll_del(vas_poll_t *handle);
 
 
 /**
- * Duplicate in malloc allocated space
+ * @param vas handle
+ * @param addr the to be duplicated buffer's address
+ * @param len size of buffer
+ * @returns a buffer with the duplicated contents
+ *
+ * Duplicate a buffer in dynamically allocated space
  */
 void *vas_dup(vas_t*, const vas_addr_t, size_t);
 
 #ifdef VAS_USES_MACH
 /**
+ * @param vas handle
+ * @param addr the to be duplicated buffer's address
+ * @param len size of buffer
+ * @returns a buffer with the duplicated contents
+ *
  * Duplicate with CoW-Semantics if possible
  * CoW is possible if vas_dup_cow != vas_dup
- * \NOTE This will most likely involve a TLB flush on your system,
+ * @note This will most likely involve a TLB flush on your system,
  *       So, it's not a silver bullet.
  */
-void *vas_dup_cow(vas_t*, const vas_addr_t, size_t);
-int vas_dup_cow_free(vas_t *vas, void* addr, size_t len);
+void *vas_dup_cow(vas_t *vas, const vas_addr_t addr, size_t len);
+
+/**
+ * @param vas handle
+ * @param addr an address returned by \ref vas_dup_cow
+ * @param len the same length specified when calling \ref vas_dup_cow with addr as argument
+ * @returns 0 on success, -1 on error
+ *
+ * Free a CoW-duplicated buffer
+ */
+int vas_dup_cow_free(vas_t *vas, void *addr, size_t len);
 #else
 #include <stdlib.h>
 #define vas_dup_cow vas_dup
