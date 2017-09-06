@@ -291,7 +291,7 @@ OPTIMIZE_OUTPUT_VHDL   = NO
 # Note that for custom extensions you also need to set FILE_PATTERNS otherwise
 # the files are not read by doxygen.
 
-EXTENSION_MAPPING      = 
+EXTENSION_MAPPING      = in=C
 
 # If the MARKDOWN_SUPPORT tag is enabled then doxygen pre-processes all comments
 # according to the Markdown format, which allows for more readable
@@ -768,7 +768,7 @@ WARN_LOGFILE           =
 # spaces.
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = /Users/a3f/prjs/ev3duder/src
+INPUT                  =
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
@@ -803,6 +803,7 @@ FILE_PATTERNS          = *.c \
                          *.ddl \
                          *.odl \
                          *.h \
+                         *.h.in \
                          *.hh \
                          *.hxx \
                          *.hpp \
@@ -877,7 +878,7 @@ EXCLUDE_SYMBOLS        =
 # that contain example code fragments that are included (see the \include
 # command).
 
-EXAMPLE_PATH           = 
+EXAMPLE_PATH           = test
 
 # If the value of the EXAMPLE_PATH tag contains directories, you can use the
 # EXAMPLE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp and
@@ -2021,7 +2022,7 @@ INCLUDE_PATH           =
 # used.
 # This tag requires that the tag ENABLE_PREPROCESSING is set to YES.
 
-INCLUDE_FILE_PATTERNS  = 
+INCLUDE_FILE_PATTERNS  = *.h *.h.in
 
 # The PREDEFINED tag can be used to specify one or more macro names that are
 # defined before the preprocessor is started (similar to the -D option of e.g.
