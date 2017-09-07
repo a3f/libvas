@@ -11,8 +11,6 @@
  */
 typedef struct vas_t vas_t;
 
-typedef struct vas_ringbuf_t vas_ringbuf_t;
-
 typedef struct vas_poll_t vas_poll_t;
 
 #define VAS_IS_WIN32 (${WIN32}+0)
@@ -87,5 +85,6 @@ typedef struct vas_poll_t vas_poll_t;
     };
 #endif
 
+typedef struct vas_alloc_t vas_alloc_t;
 
 #endif /* VAS_TYPES_H_ */

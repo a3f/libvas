@@ -3,8 +3,9 @@
 #define _GNU_SOURCE
 #endif
 
-#include <vas.h>
-#include <vas-internal.h>
+#include "vas.h"
+#include "vas-internal.h"
+#include "vas-ringbuf.h"
 #include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>

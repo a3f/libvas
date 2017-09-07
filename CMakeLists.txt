@@ -133,7 +133,7 @@ ENDIF()
 include_directories(include)
 include_directories(.)
 
-file(GLOB SOURCES info.c)
+file(GLOB SOURCES info.c alloc.c)
 
 STRING(REGEX MATCH "Linux" LINUX ${CMAKE_SYSTEM_NAME})
 STRING(REGEX MATCH "BSD" BSD ${CMAKE_SYSTEM_NAME})

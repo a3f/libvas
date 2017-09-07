@@ -94,23 +94,6 @@ int vas_pagesize(void);
 
 /**
  * @param vas handle to VAS
- * @param pagecount number of pages to mirror. On Windows this must be at least 16k pages
- * @param flags one or more OR-d enum vas_o_flags
- * @returns a pointer to a handle with the ring buffer base as first element or NULL on error
- *
- * Allocates a ring buffer facilitated by virtual memory (mirrored pages mapped back-to-back)
- */
-vas_ringbuf_t *vas_ringbuf_alloc(vas_t *vas, size_t pagecount, int flags);
-
-/**
- * @param base a handle returned by vas_ringbuf_alloc
- * 
- * Frees an allocated ring buffer
- */
-void vas_ringbuf_free(vas_ringbuf_t *base);
-
-/**
- * @param vas handle to VAS
  * @param path a relative or absolute path to the file to be mapped
  * @param offset The file offset to start mapping from
  * @param len number of bytes
@@ -169,7 +152,7 @@ int vas_poll(vas_poll_t *handle, void *dst);
 /**
  * @param handle a handle returned by \ref vas_poll_new
  *
- * Deletes an open poll handle 
+ * Deletes an open poll handle
  */
 void vas_poll_del(vas_poll_t *handle);
 
@@ -213,5 +196,53 @@ int vas_dup_cow_free(vas_t *vas, void *addr, size_t len);
 #define vas_dup_cow_free(vas, addr, len) (free(addr), 0)
 #endif
 
+enum vas_a_flags {
+    VAS_A_REPORT_ERROR = VAS_O_REPORT_ERROR, /* 2 */
+    VAS_A_RINGBUF = 4,
+
+    VAS_A_NOP = VAS_O_NOP /* 0 */
+};
+
+/**
+ * @param vas handle to VAS
+ * @param pagecount number of pages to allocate
+ * @param flags one or more OR-d enum vas_a_flags
+ * @returns a pointer to a an allocation handle or NULL on error
+ * @note On Windows, ring buffers must be at least 16 pages
+ *
+ * Allocates a ring buffer facilitated by virtual memory (mirrored pages mapped back-to-back)
+ */
+vas_alloc_t *vas_alloc(vas_t *vas, size_t pagecount, int flags);
+
+/**
+ * @param alloc a handle returned by vas_alloc
+ *
+ * Frees an allocation
+ */
+void vas_free(vas_alloc_t *alloc);
+
+/**
+ * @param alloc a handle returned by vas_alloc
+ * @returns base address of allocation
+ *
+ * Retrieves minimum usable address of allocation
+ */
+vas_addr_t vas_alloc_min(vas_alloc_t *alloc);
+
+/**
+ * @param alloc a handle returned by vas_alloc
+ * @returns end address of allocation
+ *
+ * Retrieves maximum usable address of allocation
+ */
+vas_addr_t vas_alloc_max(vas_alloc_t *alloc);
+
+/**
+ * @param alloc a handle returned by vas_alloc
+ * @returns allocation size
+ *
+ * Retrieves size of allocation
+ */
+size_t vas_alloc_size(vas_alloc_t *alloc);
 
 #endif

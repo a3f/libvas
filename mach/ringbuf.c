@@ -1,4 +1,5 @@
 #include "vas-mach.h"
+#include "vas-ringbuf.h"
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -28,7 +29,6 @@ vas_ringbuf_alloc(vas_t *vas, size_t pagecount, int flags)
     mach_port_t mapping_port;
     mem_entry_name_port_t name_parent = 0;
     vm_size_t len = vas_pagesize() * pagecount;
-    (void) flags;
 
     kret = vm_allocate(vas->port, (vm_address_t *)&addr, 2*len, VM_FLAGS_ANYWHERE);
     if (kret != KERN_SUCCESS) {

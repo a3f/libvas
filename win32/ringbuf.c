@@ -1,5 +1,6 @@
-#include <vas.h>
-#include <vas-internal.h>
+#include "vas.h"
+#include "vas-internal.h"
+#include "vas-ringbuf.h"
 #include <windows.h>
 #include <stdlib.h>
 

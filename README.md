@@ -60,6 +60,8 @@ libvas has no external non-OS dependencies and is written in C++-compatible C89 
 ## TODO
 
 - [X] Add support for `ptrace(PT_IO, ...)` on BSD
+- [ ] CheatEngine's dbk32.sys driver as another Win32 Backend
+- [ ] Change page access permissions
 - [ ] Better error reporting
 - [ ] run `onchild_fork` test on macOS without super user privileges
 - [ ] Make Backends selectable at run time
@@ -74,5 +76,5 @@ libvas is released under the LGPL. It contains code from [Stijus' MemoryScanner]
 
 [Proc::Memory]: https://metacpan.org/pod/Proc::Memory
 [libpid]: https://github.com/a3f/libpid
-[Alien::libvas]: https://github.com/athreef/Alien::libvas
+[Alien::libvas]: https://github.com/athreef/Alien-libvas
 [Stijus' MemoryScanner]: https://github.com/Stiju/MemoryScanner
