@@ -15,7 +15,8 @@ int main(int argc, char *argv[])
 
     if (argc > 1 && strcmp(argv[1], "child") == 0) {
         printf("pid=%ld addr=%" VAS_PRIaddr " val=%d\n", (long)pid_self(), (vas_addr_t)&val, val);
-        fflush(stdout);
+        fflush(stdout); /* This segfaults on NetBSD when ptrace(2)ing, so we skip this test
+                           in that configuration */
         while (1) {
             if (newval != val) {
                 newval = val;

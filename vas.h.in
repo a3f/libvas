@@ -3,13 +3,7 @@
 
 /** The header's version **/
 #define VAS_VERSION "${PROJECT_VERSION}"
-#cmakedefine VAS_HAVE_LIBPID_H   1
-#cmakedefine VAS_HAVE_MMAN_H     1
-#cmakedefine VAS_USES_MEMCPY     1
-#cmakedefine VAS_USES_WINAPI     2
-#cmakedefine VAS_USES_MACH       4
-#cmakedefine VAS_USES_PROCFS     8
-#cmakedefine VAS_USES_PTRACE     32
+#cmakedefine VAS_USES_MACH 1
 
 #include "vas-types.h"
 
@@ -31,6 +25,14 @@ const char *vas_get_version(void);
  * Retrieves the handle of the current VAS
  */
 vas_t *vas_self(void);
+
+/**
+ * @param vas handle
+ * @returns backend description string
+ *
+ * Get backend in use for handle
+ */
+const char *vas_backend(vas_t *vas);
 
 /* TODO some vas_error() function */
 enum vas_o_flags {

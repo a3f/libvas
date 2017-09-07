@@ -129,6 +129,7 @@ file(GLOB SOURCES info.c)
 
 STRING(REGEX MATCH "Linux" LINUX ${CMAKE_SYSTEM_NAME})
 STRING(REGEX MATCH "BSD" BSD ${CMAKE_SYSTEM_NAME})
+STRING(REGEX MATCH "NetBSD" NetBSD ${CMAKE_SYSTEM_NAME})
 
 STRING(TOLOWER "${BACKEND}" BACKEND)
 
@@ -202,26 +203,23 @@ IF("${BACKEND}" STREQUAL "")
 ENDIF()
 
 IF("${BACKEND}" STREQUAL win32)
-    MESSAGE("lib${PROJECT_NAME} will use WinAPI")
-    SET(VAS_USES_WINAPI 1)
+    SET(BACKEND_DESC WinAPI)
     file(GLOB SOURCES ${SOURCES} win32/*.c poll.c dup.c)
 
 ELSEIF("${BACKEND}" STREQUAL mach)
-    MESSAGE("lib${PROJECT_NAME} will use Mach VM API")
+    SET(BACKEND_DESC "Mach VM API")
     SET(VAS_USES_MACH 1)
     file(GLOB SOURCES ${SOURCES} mach/*.c posix/fmap.c dup.c)
 
 ELSEIF("${BACKEND}" STREQUAL process_vm)
+    SET(BACKEND_DESC "process_vm_{readv,writev}")
     file(GLOB SOURCES ${SOURCES} process_vm/*.c posix/*.c poll.c dup.c)
     IF (NOT (HAVE_PID_SELF OR pid_self))
         MESSAGE(FATAL_ERROR "Backend requires a function to retrieve own pid, but none found.")
     ENDIF()
-    SET(VAS_USES_PROCESS_VM 1)
-    MESSAGE("lib${PROJECT_NAME} will use process_vm_{readv,writev}")
 
 ELSEIF("${BACKEND}" STREQUAL procfs)
-    MESSAGE("lib${PROJECT_NAME} will use /proc/$pid/${PROCFS_MEM_OR_AS}")
-    SET(VAS_USES_PROCFS 1)
+    SET(BACKEND_DESC "/proc/$pid/${PROCFS_MEM_OR_AS}")
     IF (NOT (HAVE_PID_SELF OR pid_self))
         MESSAGE(FATAL_ERROR "Backend requires a function to retrieve own pid, but none found.")
     ENDIF()
@@ -236,18 +234,18 @@ ELSEIF("${BACKEND}" STREQUAL procfs)
     #add_definitions(-DHAS_WEAK_ALIAS)
 
 ELSEIF("${BACKEND}" STREQUAL ptrace)
+    SET(BACKEND_DESC "ptrace(2) API")
+    SET(VAS_USES_PTRACE 1)
     IF(BSD)
         MESSAGE(STATUS "procfs not mounted on this BSD. You could try to mount -t procfs proc /proc")
     ENDIF()
-    MESSAGE("lib${PROJECT_NAME} will use ptrace(2) API")
-    SET(VAS_USES_PTRACE 1)
     IF (NOT (HAVE_PID_SELF OR pid_self))
         MESSAGE(FATAL_ERROR "Backend requires a function to retrieve own pid, but none found.")
     ENDIF()
     file(GLOB SOURCES ${SOURCES} ptrace/*.c posix/*.c poll.c dup.c)
 
 ELSEIF("${BACKEND}" STREQUAL memcpy)
-    MESSAGE("lib${PROJECT_NAME} will use memcpy")
+    SET(BACKEND_DESC memcpy)
     SET(VAS_USES_MEMCPY 1)
     MESSAGE(WARNING "It looks like we don't support this system yet,")
     MESSAGE(WARNING "Falling back to trivial (own address space only) implementation.")
@@ -260,6 +258,7 @@ ELSE()
 
 ENDIF()
 
+MESSAGE("lib${PROJECT_NAME} will use ${BACKEND_DESC}")
 
 
 configure_file(vas.h.in vas.h)
@@ -295,18 +294,23 @@ ENDIF()
 
 enable_testing()
 
-IF(VAS_USES_MEMCPY)
-    LIST(REMOVE_ITEM AUTO_TESTS ringbuf)
-    LIST(REMOVE_ITEM AUTO_TESTS onchild_fork)
-ENDIF()
-
-
 foreach(T ${AUTO_TESTS})
     file(GLOB ${T}_src test/${T}.c)
     add_executable(${T} ${${T}_src})
     target_link_libraries(${T} ${PROJECT_NAME})
     set_target_properties(${T} PROPERTIES OUTPUT_NAME "${T}")
 endforeach(T)
+
+
+IF(NetBSD AND VAS_USES_PTRACE) # see test/onchild_popen.c for details
+    LIST(REMOVE_ITEM AUTO_TESTS onchild_popen)
+ENDIF()
+
+IF(VAS_USES_MEMCPY)
+    LIST(REMOVE_ITEM AUTO_TESTS ringbuf)
+    LIST(REMOVE_ITEM AUTO_TESTS onchild_fork)
+ENDIF()
+
 
 FOREACH(T ${AUTO_TESTS}) 
     add_test(${T} ${CMAKE_CURRENT_BINARY_DIR}/${T})
@@ -331,7 +335,7 @@ endforeach(T)
 install(FILES ${CMAKE_BINARY_DIR}/lib${PROJECT_NAME}.pc DESTINATION share/pkgconfig)
 
 # Install library
-install (TARGETS ${PROJECT_NAME} DESTINATION lib)
+install (TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_static DESTINATION lib)
 
 # Install library headers
 install(FILES ${CMAKE_BINARY_DIR}/vas.h ${CMAKE_BINARY_DIR}/vas-types.h DESTINATION include)

@@ -52,6 +52,7 @@ ${SIZEOF_PID_T_CODE}
 #endif
 
 #cmakedefine PROCFS_MEM_OR_AS "@PROCFS_MEM_OR_AS@"
+#cmakedefine BACKEND_DESC "@BACKEND_DESC@"
 
 #ifndef HAVE_PTRACE_PEEKDATA
     #define PTRACE_PEEKDATA PT_READ_D

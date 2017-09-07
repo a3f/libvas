@@ -22,7 +22,7 @@ Multi-platform C lib for peeking/poking/handling virtual memory
 
 ## Install
 
-With Perl available, you can run:
+With Perl (and enough disk space for package dependencies) available, you can run:
 
     cpan Alien::libvas
     ln $(perl -MAlien::libvas -e 'print Alien::libvas->dist_dir')/share/pkgconfig/libvas.pc /usr/local/share/pkgconfig/
