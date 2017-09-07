@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 2.8.0)
 project(vas C)
-set(PROJECT_VERSION 0.732)
+set(PROJECT_VERSION 0.733)
+
+
+option(WITH_PIC "Compile static library as position-independent code" OFF) # Shared library is always PIC
+option(BUILD_STATIC_LIBS "Build the static library" ON)
+option(BUILD_SHARED_LIBS "Build the shared library" ON)
+option(BUILD_AUTO_TESTS "Build automatic tests" ON)
+option(BUILD_MANUAL_TESTS "Build manual test programs" ON)
+
 
 INCLUDE (CheckIncludeFiles)
 INCLUDE (CheckTypeSize)
@@ -261,6 +269,7 @@ ENDIF()
 MESSAGE("lib${PROJECT_NAME} will use ${BACKEND_DESC}")
 
 
+
 configure_file(vas.h.in vas.h)
 configure_file(vas-types.h.in vas-types.h)
 configure_file(config.h.in config.h)
@@ -269,74 +278,101 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/CFLAGS.cmake)
 
-IF(HAVE_SHM_OPEN_WITH_LIBRT) # TODO also check if shm_open is used at all
+IF(HAVE_SHM_OPEN_WITH_LIBRT) # TODO also check if shm_open is used at all?
     link_libraries(rt)
 ENDIF()
-add_library(${PROJECT_NAME} SHARED ${SOURCES})
-add_library(${PROJECT_NAME}_static STATIC ${SOURCES})
-set_property(TARGET ${PROJECT_NAME}_static PROPERTY POSITION_INDEPENDENT_CODE ON)
-IF(NOT WIN32) # Keep name at libvas.(a|dll), but avoid *.lib files overwriting each other on Windows
-    set_target_properties(${PROJECT_NAME}_static PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
+IF (BUILD_SHARED_LIBS)
+    add_library(${PROJECT_NAME} SHARED ${SOURCES})
+    set_property(TARGET ${PROJECT_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
+ENDIF()
+IF (BUILD_STATIC_LIBS)
+    add_library(${PROJECT_NAME}_static STATIC ${SOURCES})
+    if (WITH_PIC)
+        set_property(TARGET ${PROJECT_NAME}_static PROPERTY POSITION_INDEPENDENT_CODE ON)
+    ENDIF()
+    IF(NOT WIN32) # Keep name at libvas.(a|dll), but avoid *.lib files overwriting each other on Windows
+        set_target_properties(${PROJECT_NAME}_static PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
+    ENDIF()
+ENDIF()
+
+IF (NOT (BUILD_STATIC_LIBS OR BUILD_SHARED_LIBS))
+    MESSAGE(FATAL_ERROR "Both -DBUILD_SHARED_LIBS=OFF and -DBUILD_STATIC_LIBS=OFF supplied. Nothing to do...")
 ENDIF()
 
 
 # Tests
 
-SET(AUTO_TESTS onself cow ringbuf)
+IF (BUILD_AUTO_TESTS)
+    SET(AUTO_TESTS onself cow ringbuf)
 
-IF(HAVE_FORK)
-    LIST(APPEND AUTO_TESTS onchild_fork)
-ELSEIF(HAVE_CREATEPROCESS)
-ENDIF(HAVE_FORK)
+    IF(HAVE_FORK)
+        LIST(APPEND AUTO_TESTS onchild_fork)
+    ELSEIF(HAVE_CREATEPROCESS)
+    ENDIF(HAVE_FORK)
 
-IF(HAVE_POPEN)
-    LIST(APPEND AUTO_TESTS onchild_popen)
-ENDIF()
+    IF(HAVE_POPEN)
+        LIST(APPEND AUTO_TESTS onchild_popen)
+    ENDIF()
 
-enable_testing()
+    IF(BUILD_STATIC_LIBS)
+        SET(T info)
+        file(GLOB ${T}_src test/${T}.c)
+        add_executable(${T} ${${T}_src})
+        target_link_libraries(${T} ${PROJECT_NAME}_static)
+        set_target_properties(${T} PROPERTIES OUTPUT_NAME "${T}")
+        SET(T)
+    ELSE()
+        LIST(APPEND AUTO_TESTS info)
+    ENDIF(BUILD_STATIC_LIBS)
 
-foreach(T ${AUTO_TESTS})
-    file(GLOB ${T}_src test/${T}.c)
-    add_executable(${T} ${${T}_src})
-    target_link_libraries(${T} ${PROJECT_NAME})
-    set_target_properties(${T} PROPERTIES OUTPUT_NAME "${T}")
-endforeach(T)
+    enable_testing()
 
-
-IF(NetBSD AND VAS_USES_PTRACE) # see test/onchild_popen.c for details
-    LIST(REMOVE_ITEM AUTO_TESTS onchild_popen)
-ENDIF()
-
-IF(VAS_USES_MEMCPY)
-    LIST(REMOVE_ITEM AUTO_TESTS ringbuf)
-    LIST(REMOVE_ITEM AUTO_TESTS onchild_fork)
-ENDIF()
-
-
-FOREACH(T ${AUTO_TESTS}) 
-    add_test(${T} ${CMAKE_CURRENT_BINARY_DIR}/${T})
-ENDFOREACH()
+    foreach(T ${AUTO_TESTS})
+        file(GLOB ${T}_src test/${T}.c)
+        add_executable(${T} ${${T}_src})
+        target_link_libraries(${T} ${PROJECT_NAME})
+        set_target_properties(${T} PROPERTIES OUTPUT_NAME "${T}")
+    endforeach(T)
 
 
-SET(MANUAL_TESTS readlong)
+    IF(NetBSD AND VAS_USES_PTRACE) # see test/onchild_popen.c for details
+        LIST(REMOVE_ITEM AUTO_TESTS onchild_popen)
+    ENDIF()
 
-IF(WIN32)
-    LIST(APPEND MANUAL_TESTS tibia-healer)
-ENDIF()
+    IF(VAS_USES_MEMCPY)
+        LIST(REMOVE_ITEM AUTO_TESTS ringbuf)
+        LIST(REMOVE_ITEM AUTO_TESTS onchild_fork)
+    ENDIF()
 
-foreach(T ${MANUAL_TESTS})
-    file(GLOB ${T}_src test/manual/${T}.c)
-    add_executable(${T} ${${T}_src})
-    target_link_libraries(${T} ${PROJECT_NAME})
-    set_target_properties(${T} PROPERTIES OUTPUT_NAME "${T}")
-endforeach(T)
+
+    FOREACH(T ${AUTO_TESTS}) 
+        add_test(${T} ${CMAKE_CURRENT_BINARY_DIR}/${T})
+    ENDFOREACH()
+ENDIF(BUILD_AUTO_TESTS)
+
+
+IF (BUILD_MANUAL_TESTS)
+    SET(MANUAL_TESTS readlong)
+
+    IF(WIN32)
+        LIST(APPEND MANUAL_TESTS tibia-healer)
+    ENDIF()
+
+    foreach(T ${MANUAL_TESTS})
+        file(GLOB ${T}_src test/manual/${T}.c)
+        add_executable(${T} ${${T}_src})
+        target_link_libraries(${T} ${PROJECT_NAME})
+        set_target_properties(${T} PROPERTIES OUTPUT_NAME "${T}")
+    endforeach(T)
+ENDIF(BUILD_MANUAL_TESTS)
 
 
 # Install pkg-config pc
 install(FILES ${CMAKE_BINARY_DIR}/lib${PROJECT_NAME}.pc DESTINATION share/pkgconfig)
 
 # Install library
-install (TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_static DESTINATION lib)
+install (TARGETS ${PROJECT_NAME} DESTINATION lib)
+install (TARGETS ${PROJECT_NAME}_static DESTINATION lib)
 
 # Install library headers
 install(FILES ${CMAKE_BINARY_DIR}/vas.h ${CMAKE_BINARY_DIR}/vas-types.h DESTINATION include)

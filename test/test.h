@@ -17,7 +17,7 @@
     if (cond) continue;                                                   \
     fprintf(stderr, "%s:%d: Truth test \"%s\" ("  #cond  ")\n",           \
                     __FILE__, __LINE__, str);                             \
-    fprintf(stderr, "     got:   %d\n", (int)cond);                       \
+    fprintf(stderr, "     got:   %d\n", (int)(cond));                     \
     fprintf(stderr, "expected: != 0\n");                                  \
     abort();                                                              \
 } while (0)
@@ -26,8 +26,8 @@
     if (a == b) continue;                                                 \
     fprintf(stderr, "%s:%d: Equality test \"%s\" (" #a " == " #b ")\n",   \
                     __FILE__, __LINE__, str);                             \
-    fprintf(stderr, "     got: %ld\n", (long)a);                          \
-    fprintf(stderr, "expected: %ld\n", (long)b);                          \
+    fprintf(stderr, "     got: %ld\n", (long)(a));                        \
+    fprintf(stderr, "expected: %ld\n", (long)(b));                        \
     abort();                                                              \
 } while (0)
 
@@ -35,8 +35,8 @@
     if (a == b) continue;                                                 \
     fprintf(stderr, "%s:%d: Equality test \"%s\" (" #a " == " #b ")\n",   \
                     __FILE__, __LINE__, str);                             \
-    fprintf(stderr, "     got: %lx\n", (long)a);                          \
-    fprintf(stderr, "expected: %lx\n", (long)b);                          \
+    fprintf(stderr, "     got: %lx\n", (long)(a));                        \
+    fprintf(stderr, "expected: %lx\n", (long)(b));                        \
     abort();                                                              \
 } while (0)
 
@@ -44,8 +44,8 @@
     if (a != b) continue;                                                 \
     fprintf(stderr, "%s:%d: Inequality test \"%s\" (" #a " != " #b ")\n", \
                     __FILE__, __LINE__, str);                             \
-    fprintf(stderr, "       got: %ld\n", (long)a);                        \
-    fprintf(stderr, "unexpected: %ld\n", (long)b);                        \
+    fprintf(stderr, "       got: %ld\n", (long)(a));                      \
+    fprintf(stderr, "unexpected: %ld\n", (long)(b));                      \
     abort();                                                              \
 } while (0)
 
@@ -53,8 +53,8 @@
     if (a != b) continue;                                                 \
     fprintf(stderr, "%s:%d: Inequality test \"%s\" (" #a " != " #b ")\n", \
                     __FILE__, __LINE__, str);                             \
-    fprintf(stderr, "       got: %lx\n", (long)a);                        \
-    fprintf(stderr, "unexpected: %lx\n", (long)b);                        \
+    fprintf(stderr, "       got: %lx\n", (long)(a));                      \
+    fprintf(stderr, "unexpected: %lx\n", (long)(b));                      \
     abort();                                                              \
 } while (0)
 
