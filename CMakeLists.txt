@@ -274,6 +274,7 @@ IF(HAVE_SHM_OPEN_WITH_LIBRT) # TODO also check if shm_open is used at all
 ENDIF()
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 add_library(${PROJECT_NAME}_static STATIC ${SOURCES})
+set_property(TARGET ${PROJECT_NAME}_static PROPERTY POSITION_INDEPENDENT_CODE ON)
 IF(NOT WIN32) # Keep name at libvas.(a|dll), but avoid *.lib files overwriting each other on Windows
     set_target_properties(${PROJECT_NAME}_static PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
 ENDIF()
