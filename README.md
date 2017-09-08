@@ -22,7 +22,9 @@ Multi-platform C lib for peeking/poking/handling virtual memory
 
 ## Install
 
-With Perl (and enough disk space for package dependencies) available, you can run:
+Binary releases for Windows, macOS and Linux are available at the [Github releases page](https://github.com/a3f/libvas/releases).
+
+Otherwise, with Perl (and enough disk space for package dependencies) available, you can run:
 
     cpan Alien::libvas
     ln $(perl -MAlien::libvas -e 'print Alien::libvas->dist_dir')/share/pkgconfig/libvas.pc /usr/local/share/pkgconfig/

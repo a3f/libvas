@@ -3,36 +3,47 @@ sudo: required
 dist: trusty
 
 matrix:
-    include:
-        - os: linux
-          env: BITS=32 CC=gcc
-        - os: linux
-          env: BITS=64 CC=clang
-        - os: linux
-          env: BACKEND=ptrace BITS=32 CC=gcc
-        - os: linux
-          env: BACKEND=procfs BITS=64 CC=clang
-        - os: osx
-          env: BITS=32 CC=clang 
-        - os: osx
-          env: BITS=64 CC=gcc 
-
+  include:
+  - os: linux
+    env: BITS=32 CC=gcc
+  - os: linux
+    env: BITS=64 CC=clang
+  - os: linux
+    env: BACKEND=ptrace BITS=32 CC=gcc
+  - os: linux
+    env: BACKEND=procfs BITS=64 CC=clang
+  - os: osx
+    env: BITS=32 CC=clang
+  - os: osx
+    env: BITS=64 CC=gcc
 
 before_install:
-    - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then sudo apt-get install gcc-multilib ; fi
-    - if [ "$TRAVIS_OS_NAME" == "osx" && "$CC" == "gcc" ] ; then export CC=gcc-4.9 ; fi
-    - $CC --version
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then sudo apt-get install gcc-multilib ; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" && "$CC" == "gcc" ] ; then export CC=gcc-4.9 ; fi
+  - "$CC --version"
 
 before_script:
-    - export VERBOSE=1
-    - export CFLAGS=-m$BITS
-    - export LDFLAGS=-m$BITS
+  - export VERBOSE=1
+  - export CFLAGS=-m$BITS
+  - export LDFLAGS=-m$BITS
 
 script:
-    - mkdir -p build
-    - cd build
-    - cmake -DBACKEND=$BACKEND ..
-    - make
-    - sudo make install
-    - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then ctest --output-on-failure ; fi
-    - if [ "$TRAVIS_OS_NAME" == "osx" ] ; then sudo ctest --output-on-failure ; fi
+  - mkdir build
+  - cd build
+  - cmake -DBACKEND=$BACKEND ..
+  - make
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then ctest --output-on-failure ; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ] ; then sudo ctest --output-on-failure ; fi
+  - make package
+  - sudo make install
+
+deploy:
+  provider: releases
+  api_key:
+    secure: ga2QQw9ZQV1HcyB+fmvaS9xui3HBm+7KzP0w7Q3JjqENsme1PEznMi11iqKw3C9xOUaCubtOruSr883pSGfcTor/+d8WJvVTCCoVHR1On+OHViA18ihqEOe+YVCnndnnPuHwvXdr0DrMjpZnp6rtxKyHr1ABjWtIao96AJLYsV8Nb4S8OXXrT1UZDGZ9l990jo9hC0yKrKJ2768ttujCF0sTgtsSqXdhfKEyXBzp8yVKOCkBDG8cZNg2o7DepbSE/Vgnwq3kDZHdKE+OWgN/bEe786rpO+zcBd9dBdgIHc4q0OVLVFfi3F378A6LX/Y4eiGf77cl6lDMy4aqvMrSAb6jhB5IpR7v25CNKVq2gK0MxLlZ8XGsXfYr0vypw05xIlzGE/VCJVI2roiBYgd/43jE+An6gj85Auuf8QTttfBahWISjnipj5peOhL5YTmq5ioGumHI5b5bQDacL32PQk37RUeaXdszX7qK3FPZhv44bSIEuyVPpwx+Pn/5sK0bI1PofQvwFAU9Pwe/uRGH9dyjM1HU1YKHitVl41lUdSK8ukXo8oKs3y5MXIdufEoRm38okGD7YPwEJ0owjv1WEJQNWqUd+wJ2LVNiI6t93qu/4MqF5FUQydu6WwYT+jvmop7xWNNY+UEX6Pa1VaMUD5SkGXFtri648TG2TYhwdCY=
+  file_glob: true
+  file: libvas-*.tar.gz
+  skip_cleanup: true
+  on:
+    branch: master
+    tags: true
