@@ -6,6 +6,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef HAVE_UNISTD_H
+    #include <unistd.h>
+    #include <errno.h>
+
+    #ifndef TEMP_FAILURE_RETRY
+        #define TEMP_FAILURE_RETRY(expression) do { \
+            long _ret;                              \
+            retry:                                  \
+            _ret = (long)(expression);              \
+            if (_ret == -1 && errno == EINTR)       \
+                goto retry;                         \
+        } while (0);
+    #endif
+#endif
+
+
 #ifdef __GNUC__ 
 #define likely(cond)       __builtin_expect((cond), 1)
 #define unlikely(cond)     __builtin_expect((cond), 0)

@@ -86,7 +86,7 @@ vas_ringbuf_alloc(vas_t *vas, size_t pagecount, int flags)
      * Doesn't matter if using shm_open or temp file. And yes I do have enough SPC
      * XXX Not anymore. Won't track it down, just glad it works :)
      */
-    ret = ftruncate(fd, len);
+    TEMP_FAILURE_RETRY( ret = ftruncate(fd, len) );
     require(ret == 0, "ftruncate", end);
 
 
@@ -102,7 +102,7 @@ vas_ringbuf_alloc(vas_t *vas, size_t pagecount, int flags)
         ret = unlink(path);
         require(ret == 0, "unlink mirror", end);
 
-        ret = ftruncate(mapover_fd, 2*len);
+        TEMP_FAILURE_RETRY( ret = ftruncate(mapover_fd, 2*len) );
         require(ret == 0, "ftruncate mirror", end);
 
         addr = mmap(NULL, 2*len, PROT_NONE, MAP_PRIVATE, fd, 0);

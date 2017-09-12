@@ -22,7 +22,7 @@ vas_t *vas_self(void) {
         if (sprintf(file, "/proc/%ld/" PROCFS_MEM_OR_AS, (long)pid_self()) < 0)
             return NULL;
 #endif
-        self.memfd = open(file, PROCFS_O_FLAGS);
+        TEMP_FAILURE_RETRY( self.memfd = open(file, PROCFS_O_FLAGS) );
         if (self.memfd < 0)
             return NULL;
 

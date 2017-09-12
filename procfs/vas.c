@@ -107,9 +107,13 @@ vas_close(vas_t *vas)
 }
 
 int
-vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len)
+vas_read(vas_t *vas, vas_addr_t src, void* _dst, size_t len)
 {
-    ssize_t nbytes = -1;
+    char *dst = (char*)_dst;
+    ssize_t nbytes = -1, ret;
+
+    if (len == 0)
+        return 0;
 
 #if defined HAVE_PTRACE && ! defined __sun
     if (vas->pid != vas_self()->pid) {
@@ -118,41 +122,49 @@ vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len)
             return -1;
         }
 
-        {
-            int status;
-            retry:
-            if (waitpid(vas->pid, &status, 0) != vas->pid) {
-                if (errno == EINTR) goto retry;
-                vas_report("waitpid(tracee) failed");
-                goto end;
-            }
+        TEMP_FAILURE_RETRY( ret = waitpid(vas->pid, &ret, 0) );
+        if (ret != vas->pid) {
+            vas_report("waitpid(tracee) failed");
+            goto end;
         }
     }
 #endif
 
-    IF_NON_REENTRANT( pthread_mutex_lock(vas->lock); )
-        nbytes = pread(vas->memfd, dst, len, src);
-    IF_NON_REENTRANT( pthread_mutex_unlock(vas->lock); )
+    do {
+        IF_NON_REENTRANT( pthread_mutex_lock(vas->lock); )
+        ret = pread(vas->memfd, dst, len, src);
+        IF_NON_REENTRANT( pthread_mutex_unlock(vas->lock); )
+        if (ret == -1) {
+            if (errno == EINTR) continue;
+            vas_report("pread failed");
+            break;
+        }
 
-#if defined HAVE_PTRACE && ! defined __sun
+        dst += ret;
+        src += ret;
+        len -= ret;
+    } while (len && ret != 0);
+    nbytes = dst - (char*)_dst;
+
 end:
+#if defined HAVE_PTRACE && ! defined __sun
     if (vas->pid != vas_self()->pid) {
         if (ptrace(PTRACE_DETACH, vas->pid, 0, 0) == -1)
             vas_report("ptrace(detach) failed");
     }
 #endif
 
-    if (nbytes != -1)
-        return nbytes;
-
-    vas_report("pread failed");
-    return -1;
+    return nbytes;
 }
 
 int
-vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len)
+vas_write(vas_t* vas, vas_addr_t dst, const void* _src, size_t len)
 {
-    ssize_t nbytes = -1;
+    const char *src = (const char*)_src;
+    ssize_t nbytes = -1, ret;
+
+    if (len == 0)
+        return 0;
 
 #if defined HAVE_PTRACE && ! defined __sun
     if (vas->pid != vas_self()->pid) {
@@ -161,34 +173,37 @@ vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len)
             return -1;
         }
 
-        {
-            int status;
-            retry:
-            if (waitpid(vas->pid, &status, 0) != vas->pid) {
-                if (errno == EINTR) goto retry;
-                vas_report("waitpid(tracee) failed");
-                goto end;
-            }
+        TEMP_FAILURE_RETRY( ret = waitpid(vas->pid, &ret, 0) );
+        if (ret != vas->pid) {
+            vas_report("waitpid(tracee) failed");
+            goto end;
         }
     }
 #endif
 
-    IF_NON_REENTRANT( pthread_mutex_lock(vas->lock); )
-        nbytes = pwrite(vas->memfd, src, len, dst);
-    IF_NON_REENTRANT( pthread_mutex_unlock(vas->lock); )
+    do {
+        IF_NON_REENTRANT( pthread_mutex_lock(vas->lock); )
+        ret = pwrite(vas->memfd, src, len, dst);
+        IF_NON_REENTRANT( pthread_mutex_unlock(vas->lock); )
+        if (ret == -1) {
+            if (errno == EINTR) continue;
+            vas_report("pwrite failed");
+            break;
+        }
 
+        dst += ret;
+        src += ret;
+        len -= ret;
+    } while (len && ret != 0);
+    nbytes = src - (char*)_src;
 
-#if defined HAVE_PTRACE && ! defined __sun
 end:
+#if defined HAVE_PTRACE && ! defined __sun
     if (vas->pid != vas_self()->pid) {
         if (ptrace(PTRACE_DETACH, vas->pid, 0, 0) == -1)
             vas_report("ptrace(detach) failed");
     }
 #endif
 
-    if (nbytes != -1)
-        return nbytes;
-
-    vas_report("pwrite failed");
-    return -1;
+    return nbytes;
 }

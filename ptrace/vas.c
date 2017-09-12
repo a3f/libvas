@@ -89,7 +89,6 @@ vas_read(vas_t *vas, const vas_addr_t _src, void* dst, size_t len)
         return len;
     }
         
-
     if (ptrace(PTRACE_ATTACH, vas->pid, 0, 0) == -1) {
         vas_report("ptrace(attach) failed");
         return -1;
@@ -97,15 +96,12 @@ vas_read(vas_t *vas, const vas_addr_t _src, void* dst, size_t len)
 
     {
         int status;
-        retry:
-        if (waitpid(vas->pid, &status, 0) != vas->pid) {
-            if (errno == EINTR) goto retry;
+        TEMP_FAILURE_RETRY( status = waitpid(vas->pid, &status, 0) );
+        if (status != vas->pid) {
             vas_report("waitpid(tracee) failed");
             goto cleanup;
         }
     }
-
-    errno = 0;
 
 #if HAVE_PT_IO
     (void)firstchunk_size; (void)offset; (void)word;
@@ -123,6 +119,7 @@ vas_read(vas_t *vas, const vas_addr_t _src, void* dst, size_t len)
     }
 #else
 
+    errno = 0;
     /* We need to handle the first and last block specially, because of alignment */
     word = ptrace(PTRACE_PEEKDATA, vas->pid, src - offset, 0);
     if (word == -1 && errno) {
@@ -179,20 +176,17 @@ vas_write(vas_t* vas, vas_addr_t _dst, const void* _src, size_t len)
 
     if (ptrace(PTRACE_ATTACH, vas->pid, 0, 0) == -1) {
         vas_report("ptrace(attach) failed");
-        goto cleanup;
+        return -1;
     }
 
     {
         int status;
-        retry:
-        if (waitpid(vas->pid, &status, 0) != vas->pid) {
-            if (errno == EINTR) goto retry;
+        TEMP_FAILURE_RETRY( status = waitpid(vas->pid, &status, 0) );
+        if (status != vas->pid) {
             vas_report("waitpid(tracee) failed");
             goto cleanup;
         }
     }
-
-    errno = 0;
 
 #if HAVE_PT_IO
     (void)firstchunk_size; (void)offset; (void)word;
@@ -210,6 +204,7 @@ vas_write(vas_t* vas, vas_addr_t _dst, const void* _src, size_t len)
     }
 #else
 
+    errno = 0;
     /* We need to handle the first and last block specially, because of alignment */
     word = ptrace(PTRACE_PEEKDATA, vas->pid, dst - offset, 0);
     if (word == -1 && errno) {

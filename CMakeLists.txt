@@ -96,7 +96,10 @@ IF (NOT HAVE_PID_SELF)
         ENDIF()
     ENDIF()
 ENDIF()
-CHECK_SYMBOL_EXISTS(fork unistd.h HAVE_FORK)
+CHECK_INCLUDE_FILES(unistd.h HAVE_UNISTD_H)
+IF(HAVE_UNISTD_H)
+    CHECK_SYMBOL_EXISTS(fork unistd.h HAVE_FORK)
+ENDIF()
 SET(CMAKE_REQUIRED_DEFINITIONS -DCMAKE_REQUIRED_DEFINITIONS)
 CHECK_SYMBOL_EXISTS(popen stdio.h HAVE_POPEN)
 SET(CMAKE_REQUIRED_DEFINITIONS)
@@ -148,49 +151,50 @@ SET(HAVE_PROCFS_PID_MEM_EXITCODE 1 CACHE STRING "Result from TRY_RUN" FORCE)
 # IF(EXISTS finds /proc/self/mem but not /proc/1/mem for whatever reason
 # FreeBSD has no /proc/1/mem, but has /proc/anyother_pid/mem
 
-MESSAGE(STATUS "Checking for /proc/$$/as")
-CHECK_C_SOURCE_RUNS("#include <sys/types.h>
-    #include <unistd.h>
-    #include <stdio.h>
-    char filename[32];
-    int main(void) {
-        if (sprintf(filename, \"/proc/%ld/as\", (long)getpid()) < 0) return 1;
-        return access( filename, F_OK );}"
-        HAVE_PROCFS_PID_AS)
-
-IF (HAVE_PROCFS_PID_AS)
-    SET(PROCFS_MEM_OR_AS "as")
-ENDIF()
-
-MESSAGE(STATUS "Checking for /proc/$$/mem")
-CHECK_C_SOURCE_RUNS("#include <sys/types.h>
-    #include <unistd.h>
-    #include <stdio.h>
-    char filename[32];
-    int main(void) {
-        if (sprintf(filename, \"/proc/%ld/mem\", (long)getpid()) < 0) return 1;
-        return access( filename, F_OK );}"
-        HAVE_PROCFS_PID_MEM)
-
-IF (HAVE_PROCFS_PID_MEM)
-    SET(PROCFS_MEM_OR_AS "mem")
-ENDIF()
-
-IF (PROCFS_MEM_OR_AS)
-    # Linux
+IF(HAVE_UNISTD_H)
+    MESSAGE(STATUS "Checking for /proc/$$/as")
     CHECK_C_SOURCE_RUNS("#include <sys/types.h>
         #include <unistd.h>
+        #include <stdio.h>
+        char filename[32];
         int main(void) {
-            return access( \"/proc/self/${PROCFS_MEM_OR_AS}\", F_OK );}"
-            HAVE_PROCFS_SELF_SYMLINK)
-    # FreeBSD
+            if (sprintf(filename, \"/proc/%ld/as\", (long)getpid()) < 0) return 1;
+            return access( filename, F_OK );}"
+            HAVE_PROCFS_PID_AS)
+
+    IF (HAVE_PROCFS_PID_AS)
+        SET(PROCFS_MEM_OR_AS "as")
+    ENDIF()
+
+    MESSAGE(STATUS "Checking for /proc/$$/mem")
     CHECK_C_SOURCE_RUNS("#include <sys/types.h>
         #include <unistd.h>
+        #include <stdio.h>
+        char filename[32];
         int main(void) {
-            return access( \"/proc/curproc/${PROCFS_MEM_OR_AS}\", F_OK );}"
-            HAVE_PROCFS_CURPROC_SYMLINK)
-ENDIF()
+            if (sprintf(filename, \"/proc/%ld/mem\", (long)getpid()) < 0) return 1;
+            return access( filename, F_OK );}"
+            HAVE_PROCFS_PID_MEM)
 
+    IF (HAVE_PROCFS_PID_MEM)
+        SET(PROCFS_MEM_OR_AS "mem")
+    ENDIF()
+
+    IF (PROCFS_MEM_OR_AS)
+        # Linux
+        CHECK_C_SOURCE_RUNS("#include <sys/types.h>
+            #include <unistd.h>
+            int main(void) {
+                return access( \"/proc/self/${PROCFS_MEM_OR_AS}\", F_OK );}"
+                HAVE_PROCFS_SELF_SYMLINK)
+        # FreeBSD
+        CHECK_C_SOURCE_RUNS("#include <sys/types.h>
+            #include <unistd.h>
+            int main(void) {
+                return access( \"/proc/curproc/${PROCFS_MEM_OR_AS}\", F_OK );}"
+                HAVE_PROCFS_CURPROC_SYMLINK)
+    ENDIF()
+ENDIF(HAVE_UNISTD_H)
 
 IF("${BACKEND}" STREQUAL "")
     IF(WIN32)

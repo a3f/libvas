@@ -17,6 +17,7 @@
 #cmakedefine HAVE_LIBPID_H 1
 #cmakedefine HAVE_SHM_OPEN 1
 #cmakedefine HAVE_SHM_MKSTEMP 1
+#cmakedefine HAVE_UNISTD_H 1
 
 ${SIZEOF_PTRACE_RET_CODE}
 ${SIZEOF_SHORT_CODE}

@@ -71,6 +71,7 @@ libvas has no external non-OS dependencies and is written in C++-compatible C89 
 - [ ] Trapping access violations
 - [ ] Guard page allocation?
 - [ ] Wrappers for scripting languages besides Perl
+- [ ] Provide all configurations in the release package: universal libraries on macOS, Both 32 bit and 64 bit on Linux and *.lib as well as *.a on Windows
 
 ## License
 

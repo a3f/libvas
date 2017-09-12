@@ -25,11 +25,11 @@ typedef struct vas_poll_t vas_poll_t;
      * References a _data_ address in a virtual address space
      */
 
-    #include <stdint.h>
+    #include <inttypes.h>
     #ifdef UINTPTR_MAX
         typedef uintptr_t vas_addr_t;
-        #define VAS_PRIaddr PRIXPTR
-        #define VAS_SCNaddr SCNXPTR
+        #define VAS_PRIaddr PRIxPTR
+        #define VAS_SCNaddr SCNxPTR
     #else
         typedef unsigned long long vas_addr_t;
         #define VAS_PRIaddr "llx"
