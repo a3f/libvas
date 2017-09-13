@@ -59,10 +59,14 @@ vas_ringbuf_t *vas_ringbuf_alloc(vas_t *vas, size_t pagecount, int flags) {
 
         /* success! */
         ringbuf = (vas_ringbuf_t*)malloc(sizeof *ringbuf);
-        ringbuf->vas = vas;
-        ringbuf->mapping = mapping;
-        ringbuf->addr = addr;
-        ringbuf->len = len.q;
+        if (!ringbuf) {
+            retries = 0;
+        } else {
+            ringbuf->vas = vas;
+            ringbuf->mapping = mapping;
+            ringbuf->addr = addr;
+            ringbuf->len = len.q;
+        }
 
         return ringbuf;
 

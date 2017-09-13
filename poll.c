@@ -10,7 +10,7 @@ struct vas_poll_t {
 vas_poll_t *
 vas_poll_new(vas_t *vas, vas_addr_t addr, size_t size, int flags)
 {
-    vas_poll_t *handle = NULL;
+    vas_poll_t *handle;
     (void)flags;
 
     handle = (vas_poll_t*)malloc(sizeof *handle);

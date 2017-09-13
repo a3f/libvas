@@ -70,6 +70,8 @@ vas_ringbuf_alloc(vas_t *vas, size_t pagecount, int flags)
     }
 
 	_ringbuf = malloc(sizeof *ringbuf);
+    if (!_ringbuf)
+        return NULL;
 #if HAVE_SHM_MKSTEMP
 	fd = shm_mkstemp(path);
 #elif HAVE_SHM_OPEN
