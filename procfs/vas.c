@@ -137,6 +137,8 @@ vas_read(vas_t *vas, vas_addr_t src, void* _dst, size_t len)
         if (ret == -1) {
             if (errno == EINTR) continue;
             vas_report("pread failed");
+            if (dst == _dst)
+                goto end;
             break;
         }
 
@@ -188,6 +190,8 @@ vas_write(vas_t* vas, vas_addr_t dst, const void* _src, size_t len)
         if (ret == -1) {
             if (errno == EINTR) continue;
             vas_report("pwrite failed");
+            if (src == _src)
+                goto end;
             break;
         }
 
