@@ -2,13 +2,20 @@ cmake_minimum_required(VERSION 2.8.0)
 project(vas C)
 set(PROJECT_VERSION 0.741)
 
-
 option(WITH_PIC "Compile static library as position-independent code" OFF) # Shared library is always PIC
 option(BUILD_STATIC_LIBS "Build the static library" ON)
 option(BUILD_SHARED_LIBS "Build the shared library" ON)
+option(BUILD_MACOS_FATLIB "Build Fat library for both i386 and x86_64 on macOS" ON)
 option(BUILD_AUTO_TESTS "Build automatic tests" ON)
 option(BUILD_MANUAL_TESTS "Build manual test programs" ON)
 
+IF(BUILD_MACOS_FATLIB)
+    IF (CMAKE_OSX_ARCHITECTURES)
+        MESSAGE(FATAL_ERROR "User supplied -DCMAKE_OSX_ARCHITECTURES overrides BUILD_MACOS_FATLIB=ON")
+    ELSE()
+        SET(CMAKE_OSX_ARCHITECTURES "x86_64;i386")
+    ENDIF()
+ENDIF()
 
 INCLUDE (CheckIncludeFiles)
 INCLUDE (CheckTypeSize)
@@ -311,6 +318,7 @@ ENDIF()
 IF (NOT (BUILD_STATIC_LIBS OR BUILD_SHARED_LIBS))
     MESSAGE(FATAL_ERROR "Both -DBUILD_SHARED_LIBS=OFF and -DBUILD_STATIC_LIBS=OFF supplied. Nothing to do...")
 ENDIF()
+
 
 # SWIG
 
