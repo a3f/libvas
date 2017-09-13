@@ -1,6 +1,10 @@
 #ifndef LIBVAS_VAS_H_
 #define LIBVAS_VAS_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** The header's version **/
 #define VAS_VERSION "${PROJECT_VERSION}"
 #cmakedefine VAS_USES_MACH 1
@@ -34,9 +38,9 @@ vas_t *vas_self(void);
  */
 const char *vas_backend(vas_t *vas);
 
-/* TODO some vas_error() function */
 enum vas_o_flags {
-    VAS_O_REPORT_ERROR = 2, /** Report errors to stderr, except for malloc returning NULL
+    VAS_O_REPORT_ERROR = 2, /** Additionally report errors to stderr,
+                                except for malloc returning NULL
                                 This is still work in progress. not all functions
                                 report errors **/
 
@@ -53,6 +57,14 @@ enum vas_o_flags {
  * Opens a handle to a process' address space
  */
 vas_t *vas_open(pid_t pid, int flags);
+
+/**
+ * @param vas handle to fetch error for or NULL for last <s>thread-local</s> global error
+ * @returns a string containing the last error which occurred or NULL if none has yet occurred.
+ * @note TODO change global to thread-local
+ */
+const char *vas_error(vas_t *vas);
+
 
 /**
  * @param vas handle
@@ -244,5 +256,9 @@ vas_addr_t vas_alloc_max(vas_alloc_t *alloc);
  * Retrieves size of allocation
  */
 size_t vas_alloc_size(vas_alloc_t *alloc);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

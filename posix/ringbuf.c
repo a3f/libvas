@@ -21,6 +21,7 @@
     #define MAP_ANONYMOUS MAP_ANON
 #endif
 
+#define vas_seterror()
 #define vas_perror perror
 #define vas_report_cond (flags & VAS_O_REPORT_ERROR)
 

@@ -18,7 +18,9 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
+#define vas_seterror() do { error = vas->error = errno; } while (0)
 #define vas_perror perror
 #define vas_report_cond (vas->flags & VAS_O_REPORT_ERROR)
 
@@ -46,14 +48,15 @@ static ssize_t my_pwrite(int fd, const void *buf, size_t count, off_t offset) {
 #endif
 #undef SET
 
-
 struct vas_t {
     pid_t pid;
     int memfd;
     int flags;
+    int error;
     IF_NON_REENTRANT( pthread_mutex_t lock; )
 };
 
+static int error;
 
 vas_t *
 vas_open(pid_t pid, int flags)
@@ -65,6 +68,7 @@ vas_open(pid_t pid, int flags)
     int ret;
 
     if (flags & ~(VAS_O_REPORT_ERROR)) {
+        error = EINVAL;
         if (flags & VAS_O_REPORT_ERROR)
             fputs("Unknown bit in flags parameter\n", stderr);
         return NULL;
@@ -78,6 +82,7 @@ vas_open(pid_t pid, int flags)
 
     fd = open(filename, PROCFS_O_FLAGS);
     if (fd < 0) {
+        error = errno;
         if (flags & VAS_O_REPORT_ERROR) {
             fprintf(stderr, "open(\"%s\") failed: ", filename);
             perror(NULL);
@@ -85,15 +90,29 @@ vas_open(pid_t pid, int flags)
         return NULL;
     }
     vas = (struct vas_t*)malloc(sizeof *vas);
-    if (vas == NULL) {
+    if (!vas)
         return NULL;
-    }
+
     vas->pid = pid;
     vas->memfd = fd;
     vas->flags = flags;
+    vas->error = 0;
     IF_NON_REENTRANT( vas->lock = PTHREAD_MUTEX_INITIALIZER; )
 
     return vas;
+}
+
+const char *
+vas_error(vas_t *vas)
+{
+    int _error = vas ? vas->error : error;
+    return _error ? strerror(_error) : NULL;
+}
+
+void
+vas_clearerror(vas_t *vas)
+{
+    *(vas ?  &vas->error : &error) = 0;
 }
 
 void

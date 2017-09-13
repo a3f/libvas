@@ -18,6 +18,7 @@ struct vas_ringbuf_t {
 };
 
 #define vas_report_cond (flags & VAS_O_REPORT_ERROR)
+#define vas_seterror() do { vas_errno = vas->error = kret; } while (0)
 
 vas_ringbuf_t *
 vas_ringbuf_alloc(vas_t *vas, size_t pagecount, int flags)

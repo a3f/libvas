@@ -11,13 +11,17 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #define vas_perror perror
+#define vas_seterror() do { error = vas->error = errno; } while (0)
 #define vas_report_cond (vas->flags & VAS_O_REPORT_ERROR)
+static int error;
 
 struct vas_t {
     pid_t pid;
     int flags;
+    int error;
 };
 
 vas_t *
@@ -38,19 +42,34 @@ vas_open(pid_t pid, int flags)
     struct vas_t *vas;
 
     if (flags & ~(VAS_O_REPORT_ERROR)) {
+        error = EINVAL;
         if (flags & VAS_O_REPORT_ERROR)
             fputs("Unknown bit in flags parameter\n", stderr);
         return NULL;
     }
 
     vas = (struct vas_t*)malloc(sizeof *vas);
-    if (vas == NULL) {
+    if (!vas)
         return NULL;
-    }
+
     vas->pid = pid;
     vas->flags = flags;
+    vas->error = 0;
 
     return vas;
+}
+
+const char *
+vas_error(vas_t *vas)
+{
+    int _error = vas ? vas->error : error;
+    return _error ? strerror(_error) : NULL;
+}
+
+void
+vas_clearerror(vas_t *vas)
+{
+    *(vas ?  &vas->error : &error) = 0;
 }
 
 void
@@ -75,11 +94,10 @@ vas_read(vas_t *vas, const vas_addr_t src, void* dst, size_t len)
 
     nbytes = process_vm_readv(vas->pid, &dstv, 1, &srcv, 1, 0);
 
-    if (nbytes != -1)
-        return nbytes;
+    if (nbytes == -1)
+        vas_report("process_vm_readv failed");
 
-    vas_report("process_vm_readv failed");
-    return -1;
+    return nbytes;
 }
 
 int
@@ -96,9 +114,8 @@ vas_write(vas_t* vas, vas_addr_t dst, const void* src, size_t len)
 
     nbytes = process_vm_writev(vas->pid, &srcv, 1, &dstv, 1, 0);
 
-    if (nbytes != -1)
-        return nbytes;
+    if (nbytes == -1)
+        vas_report("process_vm_writev failed");
 
-    vas_report("process_vm_writev failed");
-    return -1;
+    return nbytes;
 }

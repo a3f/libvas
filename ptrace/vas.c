@@ -20,11 +20,14 @@
 #endif
 
 #define vas_perror perror
+#define vas_seterror() do { error = vas->error = errno; } while (0)
 #define vas_report_cond (vas->flags & VAS_O_REPORT_ERROR)
+static int error;
 
 struct vas_t {
     int flags;
     pid_t pid;
+    int error;
 };
 
 vas_t *
@@ -44,6 +47,7 @@ vas_open(pid_t pid, int flags)
     struct vas_t *vas;
 
     if (flags & ~(VAS_O_REPORT_ERROR)) {
+        error = EINVAL;
         if (flags & VAS_O_REPORT_ERROR)
             fputs("Unknown bit in flags parameter\n", stderr);
         return NULL;
@@ -55,10 +59,27 @@ vas_open(pid_t pid, int flags)
     }
 
     vas = (struct vas_t*)malloc(sizeof *vas);
+    if (!vas)
+        return NULL;
+
     vas->pid = pid;
     vas->flags = flags;
+    vas->error = 0;
 
     return vas;
+}
+
+const char *
+vas_error(vas_t *vas)
+{
+    int _error = vas ? vas->error : error;
+    return _error ? strerror(_error) : NULL;
+}
+
+void
+vas_clearerror(vas_t *vas)
+{
+    *(vas ?  &vas->error : &error) = 0;
 }
 
 void

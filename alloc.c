@@ -46,7 +46,7 @@ vas_alloc(vas_t *vas, size_t pagecount, int flags)
 
 
 
-    alloc = malloc(sizeof *alloc);
+    alloc = (vas_alloc_t*)malloc(sizeof *alloc);
     if (!alloc)
         return NULL;
 

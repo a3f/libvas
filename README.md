@@ -64,7 +64,9 @@ libvas has no external non-OS dependencies and is written in C++-compatible C89 
 - [X] Add support for `ptrace(PT_IO, ...)` on BSD
 - [ ] CheatEngine's dbk32.sys driver as another Win32 Backend
 - [ ] Change page access permissions
-- [ ] Better error reporting
+- [X] Better error reporting
+- [ ] Report errors on Windows
+- [ ] Make global errors thread-local
 - [ ] run `onchild_fork` test on macOS without super user privileges
 - [ ] Make Backends selectable at run time
 - [ ] Partition backends: ringbuffer, CoW, memory peek/poke?

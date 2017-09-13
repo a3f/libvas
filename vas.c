@@ -11,6 +11,9 @@ struct vas_t {
     pid_t pid;
 };
 
+static const char *error;
+#define NOT_SELF "memcpy backend only suppports self-operation.";
+
 vas_t *vas_self(void) {
     static struct vas_t vas;
     if (!vas.pid)
@@ -24,7 +27,24 @@ vas_t *vas_open(pid_t pid, int flags) {
     if (pid == pid_self())
         return vas_self();
 
+    error = NOT_SELF;
     return NULL;
+}
+
+const char *vas_error(vas_t *vas)
+{
+    if (vas)
+        return NULL;
+
+    return error;
+}
+
+void vas_clearerror(vas_t *vas)
+{
+    if (vas)
+        return;
+
+    error = NULL;
 }
 
 void vas_close(vas_t *vas) {

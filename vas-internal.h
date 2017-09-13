@@ -46,10 +46,11 @@
 #define vas_die_on(cond) do { if (cond) vas_exit(); } while (0)
 
 /* strerror isn't thread-safe and strerror_r isn't C89 */
-#define vas_report_on(cond, msg) do {                              \
-    if (cond) { \
+#define vas_report_on(cond, msg) do {                     \
+    vas_seterror();                                       \
+    if (cond) {                                           \
         fputs(__FILE__ ":" TOSTR(__LINE__) ": ", stderr); \
-        vas_perror(msg); \
+        vas_perror(msg);                                  \
     }                                                     \
 } while(0)
 

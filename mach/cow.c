@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #define vas_report_cond 1 /* FIXME vas_dup_cow has no flags parameter */
+#define vas_seterror() do { vas_errno = vas->error = kret; } while (0)
 
 void *
 vas_dup_cow(vas_t *vas, const vas_addr_t src, size_t len)

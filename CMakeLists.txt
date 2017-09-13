@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.0)
-project(vas)
-set(PROJECT_VERSION 0.740)
+project(vas C)
+set(PROJECT_VERSION 0.741)
 
 
 option(WITH_PIC "Compile static library as position-independent code" OFF) # Shared library is always PIC
@@ -342,7 +342,7 @@ ENDIF(SWIG_FOUND)
 # Tests
 
 IF (BUILD_AUTO_TESTS)
-    SET(AUTO_TESTS onself cow ringbuf)
+    SET(AUTO_TESTS onself cow ringbuf error)
 
     IF(HAVE_FORK)
         LIST(APPEND AUTO_TESTS onchild_fork)

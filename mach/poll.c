@@ -1,6 +1,7 @@
 #include "vas-mach.h"
 
 #define vas_report_cond (flags & VAS_O_REPORT_ERROR)
+#define vas_seterror() do { vas_errno = vas->error = kret; } while (0)
 
 struct vas_poll_t {
     vas_t *vas;
