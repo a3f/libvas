@@ -6,6 +6,7 @@
 #include "vas-internal.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 struct vas_t {
     pid_t pid;
