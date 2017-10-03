@@ -416,7 +416,7 @@ ENDIF(BUILD_MANUAL_TESTS)
 
 
 # Install pkg-config pc
-install(FILES ${CMAKE_BINARY_DIR}/lib${PROJECT_NAME}.pc DESTINATION share/pkgconfig)
+install(FILES ${CMAKE_BINARY_DIR}/lib${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
 
 # Install library
 install (TARGETS ${PROJECT_NAME} DESTINATION lib)

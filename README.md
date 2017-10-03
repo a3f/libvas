@@ -1,10 +1,10 @@
-Multi-platform C lib for peeking/poking/handling virtual memory
+Cross-Platform C library for peeking/poking/handling virtual memory
 
-    #define CHARACTER_HEALTH 0xDEADBEEF
-    vas_t *proc = vas_open(pid, 0);
-    uint32_t health;
-    vas_read(proc, CHARACTER_HEALTH, &health, sizeof(uint32_t));
-    printf("Character health is %" PRIu32 "\n", health);
+    #define CHARACTER_HEALTH_ADDR 0xDEADBEEF /* In foreign address space */
+    unsigned health;
+    vas_t *vas = vas_open(process_id, 0);
+    vas_read(vas, CHARACTER_HEALTH_ADDR, &health, sizeof (unsigned));
+    printf("Character health is %u\n", health);
 
 [![Build Status](https://travis-ci.org/a3f/libvas.svg?branch=master)](https://travis-ci.org/a3f/libvas)
 [![Build status](https://ci.appveyor.com/api/projects/status/q68mvjmksaide04c/branch/master?svg=true)](https://ci.appveyor.com/project/a3f/libvas/branch/master)
@@ -14,7 +14,7 @@ Multi-platform C lib for peeking/poking/handling virtual memory
 
 ## Features
 
-- Multi-Platform: Runs on Windows, Linux, BSD, MacOS, SunOS and a probably a couple more systems
+- Cross-Platform: Runs on Windows, Linux, BSD, MacOS, SunOS and a probably a couple more systems
 - Read/Write/Remap other processes' memory
 - Allocate those nifty virtual-memory-mirrored ring buffers
 - Duplicate memory with Copy-on-Write semantics

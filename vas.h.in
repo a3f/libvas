@@ -147,6 +147,7 @@ int vas_writev(vas_t*, const struct vas_addrvec[], int vec_len);
  * @param len number of bytes
  * @param flags one or more OR-d enum vas_o_flags
  * @note On supporting platforms (Mach currently), this remaps the page, saving subsequent TLB flushes.
+ * @BUG TODO Check if VIVT cache and disallow sizes so small it would lead to aliasing
  *
  * Open a handle to poll a buffer for changes
  */
@@ -221,6 +222,7 @@ enum vas_a_flags {
  * @param flags one or more OR-d enum vas_a_flags
  * @returns a pointer to a an allocation handle or NULL on error
  * @note On Windows, ring buffers must be at least 16 pages
+ * @BUG TODO Check if VIVT cache and disallow sizes so small it would lead to aliasing
  *
  * Allocates a ring buffer facilitated by virtual memory (mirrored pages mapped back-to-back)
  */
