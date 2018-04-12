@@ -5,7 +5,7 @@ set(PROJECT_VERSION 0.741)
 option(WITH_PIC "Compile static library as position-independent code" OFF) # Shared library is always PIC
 option(BUILD_STATIC_LIBS "Build the static library" ON)
 option(BUILD_SHARED_LIBS "Build the shared library" ON)
-option(BUILD_MACOS_FATLIB "Build Fat library for both i386 and x86_64 on macOS" ON)
+option(BUILD_MACOS_FATLIB "Build universal library for both i386 and x86_64 on macOS" ON)
 option(BUILD_AUTO_TESTS "Build automatic tests" ON)
 option(BUILD_MANUAL_TESTS "Build manual test programs" ON)
 
@@ -17,16 +17,21 @@ IF(BUILD_MACOS_FATLIB)
     ENDIF()
 ENDIF()
 
+set (CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+INCLUDE (CheckIncludeFiles)
 INCLUDE (CheckIncludeFiles)
 INCLUDE (CheckTypeSize)
 INCLUDE (CheckCSourceCompiles)
 INCLUDE (CheckCSourceRuns)
 INCLUDE (CheckSymbolExists)
-set (CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+INCLUDE (AddIfFlagCompiles)
 
 IF(WIN32)
     add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
 ENDIF()
+
+add_if_flag_compiles(-Werror=pointer-arith CMAKE_C_FLAGS)
+add_if_flag_compiles(-Werror=implicit-function-declaration CMAKE_C_FLAGS)
 
 #for whatever reason this doesn't work:
 #CHECK_INCLUDE_FILES(ptrace.h HAVE_SYS_PTRACE_H)
