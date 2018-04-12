@@ -18,7 +18,7 @@ IF(BUILD_MACOS_FATLIB)
 ENDIF()
 
 set (CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-INCLUDE (CheckIncludeFiles)
+INCLUDE (GNUInstallDirs)
 INCLUDE (CheckIncludeFiles)
 INCLUDE (CheckTypeSize)
 INCLUDE (CheckCSourceCompiles)
@@ -230,7 +230,7 @@ IF("${BACKEND}" STREQUAL "")
     ELSEIF(HAVE_SYS_PTRACE_H AND NOT APPLE) # BSD without procfs mounted, what else?
         SET(BACKEND ptrace)                 # macOS always reports EBUSY instead of proper ESYS
 
-    ELSE() 
+    ELSE()
         SET(BACKEND memcpy)
     ENDIF()
 ENDIF()
@@ -398,7 +398,7 @@ IF (BUILD_AUTO_TESTS)
     ENDIF()
 
 
-    FOREACH(T ${AUTO_TESTS}) 
+    FOREACH(T ${AUTO_TESTS})
         add_test(${T} ${CMAKE_CURRENT_BINARY_DIR}/${T})
     ENDFOREACH()
 ENDIF(BUILD_AUTO_TESTS)
@@ -421,14 +421,14 @@ ENDIF(BUILD_MANUAL_TESTS)
 
 
 # Install pkg-config pc
-install(FILES ${CMAKE_BINARY_DIR}/lib${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
+install(FILES ${CMAKE_BINARY_DIR}/lib${PROJECT_NAME}.pc DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 
 # Install library
-install (TARGETS ${PROJECT_NAME} DESTINATION lib)
-install (TARGETS ${PROJECT_NAME}_static DESTINATION lib)
+install (TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ${PROJECT_NAME}_static DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # Install library headers
-install(FILES ${CMAKE_BINARY_DIR}/vas.h ${CMAKE_BINARY_DIR}/vas-types.h DESTINATION include)
+install(FILES ${CMAKE_BINARY_DIR}/vas.h ${CMAKE_BINARY_DIR}/vas-types.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 SET(CPACK_PACKAGE_NAME "lib${PROJECT_NAME}")
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Multi-Platform memory reading/writing")
