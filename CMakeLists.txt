@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8.0)
 project(vas C)
-set(PROJECT_VERSION 0.741)
+set(PROJECT_VERSION 0.7.42)
+set(API_VERSION 0)
 
 option(WITH_PIC "Compile static library as position-independent code" OFF) # Shared library is always PIC
 option(BUILD_STATIC_LIBS "Build the static library" ON)
@@ -309,6 +310,11 @@ ENDIF()
 IF (BUILD_SHARED_LIBS)
     add_library(${PROJECT_NAME} SHARED ${SOURCES})
     set_property(TARGET ${PROJECT_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        VERSION   ${PROJECT_VERSION}
+        SOVERSION ${API_VERSION}
+        PUBLIC_HEADER "vas.h;vas-types.h"
+    )
 ENDIF()
 IF (BUILD_STATIC_LIBS)
     add_library(${PROJECT_NAME}_static STATIC ${SOURCES})
