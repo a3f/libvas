@@ -313,7 +313,6 @@ IF (BUILD_SHARED_LIBS)
     set_target_properties(${PROJECT_NAME} PROPERTIES
         VERSION   ${PROJECT_VERSION}
         SOVERSION ${API_VERSION}
-        PUBLIC_HEADER "vas.h;vas-types.h"
     )
 ENDIF()
 IF (BUILD_STATIC_LIBS)
